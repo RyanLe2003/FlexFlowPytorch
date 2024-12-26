@@ -1,4 +1,5 @@
 from PCGNode import PCGNode
+from PCGNodeType import PCGNodeType
 import torch
 
 def partition_tensor(tensor, dim, num_partitions):
@@ -28,12 +29,23 @@ def traverse(PCG):
     while queue:
         cur_node = queue.pop()
 
+        # execute current node
+        # if cur_node.type == PCGNodeType.ALGEBRAIC:
+        
+        # elif cur_node.type == PCGNodeType.PARALLEL:
+
+
+
+
+
+
         for child in PCG[cur_node]:
             indegree[child] -= 1
             if indegree[child] == 0:
                 queue.append(child)
+
     
-    
+
 
     
 

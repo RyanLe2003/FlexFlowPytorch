@@ -1,6 +1,6 @@
 class PCGNode:
-    def __init__(self, operation, parallel_strategy=None) -> None:
-        self.operation = operation
-        self.parallel_strategy = parallel_strategy
+    def __init__(self, type, task) -> None:
+        self.type = type
+        self.task = task
         self.inputs = []
         self.outputs = []

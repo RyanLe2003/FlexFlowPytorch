@@ -1,4 +1,4 @@
-from training import executePCG
+from training import traverse
 from PCGNode import PCGNode
 from parallelizationOps import parallelizationOps
 import torch
@@ -6,13 +6,14 @@ import torch
 def basic_partition_and_combine_test():
     root_node = PCGNode("root", parallelizationOps.PARTITION)
 
-    child_node = PCGNode("child1", parallelizationOps.COMBINE)
-    root_node.add_child(child_node)
+    child_node1 = PCGNode("child1", parallelizationOps.COMBINE)
+    child_node2 = PCGNode("child2", parallelizationOps.COMBINE)
 
-    child_node = PCGNode("child2", parallelizationOps.COMBINE)
-    root_node.add_child(child_node)
+    pcg = {root_node: [child_node1, child_node2],
+           child_node1: [], 
+           child_node2: [] }
 
-    executePCG(root_node)
+    traverse(pcg)
 
 if __name__ == '__main__':
     basic_partition_and_combine_test()

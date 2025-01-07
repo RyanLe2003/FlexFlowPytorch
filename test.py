@@ -1,7 +1,7 @@
-from training import partition_tensor
-from training import combine_tensors
-from training import replicate_tensor
-from training import reduce_tensors
+from operations import partition_tensor
+from operations import combine_tensors
+from operations import replicate_tensor
+from operations import reduce_tensors
 import torch
 import unittest
 
@@ -48,8 +48,6 @@ class TestOperations(unittest.TestCase):
         result = reduce_tensors([tensor1, tensor2])
         
         self.assertTrue(torch.equal(expected, result))
-
-
 
 if __name__ == '__main__':
     unittest.main()

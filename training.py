@@ -1,75 +1,55 @@
-from PCGNode import PCGNode
-from PCGNodeType import PCGNodeType
+from concurrent.futures import ThreadPoolExecutor
+from collections import defaultdict
 import torch
+from PCGNode import execute_node
 
-def partition_tensor(tensor, dim, num_partitions):
-    return torch.chunk(tensor, num_partitions, dim)
+def execute_pcg_parallel(pcg):
+    results = {}
+    num_gpus = torch.cuda.device_count()
+    executor = ThreadPoolExecutor(max_workers=num_gpus)
 
-def combine_tensors(tensors, dim):
-    return torch.cat(tensors, dim)
+    remaining_dependencies = {}
+    for name, node in pcg.items():
+        remaining_dependencies[name] = len(node.dependencies)
 
-def replicate_tensor(tensor, num_replicas):
-    return [tensor.clone() for _ in range(num_replicas)]
+    def resolve_dependencies(node_name):
+        for child in [n for n in pcg if node_name in pcg[n].dependencies]:
+            remaining_dependencies[child] -= 1
+            if remaining_dependencies[child] == 0:
+                pcg[child].status = "READY"
 
-def reduce_tensors(tensors):
-    return torch.stack(tensors).sum(0)
+    while any(node.status != "COMPLETED" for node in pcg.values()):
+        ready_nodes = [name for name, node in pcg.items() if node.status == "READY"]
 
-def traverse(PCG):
-    # topological sort
-    indegree = {}
-    for node_info in PCG.values():
-        for child in node_info:
-            indegree[child] = indegree.get(child, 0) + 1
+        futures = {}
+        for node_name in ready_nodes:
+            node = pcg[node_name]
+            node.status = "RUNNING"
+            node.outputs = [None] * len(node.machine_mapping)  # Initialize outputs for each task
+            for index in range(len(node.machine_mapping)):
+                future = executor.submit(execute_node, node, results, index)
+                futures[future] = (node_name, index)
     
-    queue = []
-    for node in indegree:
-        if indegree[node] == 0:
-            queue.append(node)
-    
-    while queue:
-        cur_node = queue.pop()
+    for future in futures:
+        node_name, task_idx = futures[future]
+        results[node_name] = results.get(node_name, {})
+        results[node_name][task_idx] = future.result()  # Store result for the specific task
+        pcg[node_name].outputs[task_idx] = results[node_name][task_idx]  # Update node output
 
-        # execute current node
-        # if cur_node.type == PCGNodeType.ALGEBRAIC:
+        # Check if all tasks for the node are completed
+        if all(output is not None for output in pcg[node_name].outputs):
+            pcg[node_name].status = "COMPLETED"
+            resolve_dependencies(node_name)
+
+
+
+
+
+    
+    
         
-        # elif cur_node.type == PCGNodeType.PARALLEL:
-
-
-
-
-
-
-        for child in PCG[cur_node]:
-            indegree[child] -= 1
-            if indegree[child] == 0:
-                queue.append(child)
-
-    
-
-
-    
-
-
-
-    
-
-
-
-
 
 
 
 
     
-
-
-
-
-    
-    
-
-
-
-
-
-

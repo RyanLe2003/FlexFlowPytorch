@@ -1,7 +1,7 @@
-from operations import partition_tensor
-from operations import combine_tensors
-from operations import replicate_tensor
-from operations import reduce_tensors
+from tensor_operations import partition_tensor
+from tensor_operations import combine_tensors
+from tensor_operations import replicate_tensor
+from tensor_operations import reduce_tensors
 import torch
 import unittest
 

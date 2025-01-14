@@ -1,5 +1,4 @@
 from concurrent.futures import ThreadPoolExecutor
-from collections import defaultdict
 import torch
 from PCGNode import execute_node
 

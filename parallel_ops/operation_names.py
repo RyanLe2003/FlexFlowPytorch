@@ -1,6 +1,6 @@
 from enum import Enum
 
-class parallelizationOps(Enum):
+class operation_names(Enum):
     REDUCE = "reduce"
     PARTITION = "partition"
     REPLICATE = "replicate"

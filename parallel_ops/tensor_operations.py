@@ -11,33 +11,3 @@ def replicate_tensor(tensor, num_replicas):
 
 def reduce_tensors(tensors):
     return torch.stack(tensors).sum(0)
-
-    
-
-
-    
-
-
-
-    
-
-
-
-
-
-
-
-
-    
-
-
-
-
-    
-    
-
-
-
-
-
-

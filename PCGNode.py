@@ -1,24 +1,14 @@
-import torch
+from node_status import node_status
 
 class PCGNode:
-    def __init__(self, name, task, dependencies, machine_mapping) -> None:
+    def __init__(self, name, operation, dependencies, machine_mapping,
+                 dim=None, num_partitions=1, num_replicas=1) -> None:
         self.name = name
-        self.task = task
-        self.status = "READY" if not dependencies else "WAITING"
+        self.operation = operation
+        self.status = node_status.READY if not dependencies else node_status.WAITING
         self.dependencies = dependencies  # name of parent nodes
         self.machine_mapping = machine_mapping
         self.data = []
-
-
-def execute_node(node, parent_outputs, index):
-    torch_device = torch.device("cpu")
-    if torch.cuda.is_available():
-        device = node.machine_mapping[index]
-        torch_device = torch.device(f"cuda:{device}")
-
-    if node.task:
-        inputs = []
-        inputs.append(parent_outputs[index].to(torch_device))
-        return node.operation(*inputs)
-    else:
-        return None
+        self.dim = dim
+        self.num_partitions = num_partitions
+        self.num_replicas = num_replicas

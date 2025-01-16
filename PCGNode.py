@@ -1,7 +1,7 @@
 from node_status import node_status
 
 class PCGNode:
-    def __init__(self, name, operation, dependencies, machine_mapping,
+    def __init__(self, name, dependencies, machine_mapping, operation=None,
                  dim=None, num_partitions=1, num_replicas=1) -> None:
         self.name = name
         self.operation = operation

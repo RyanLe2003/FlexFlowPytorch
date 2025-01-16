@@ -6,6 +6,10 @@ from parallel_ops.tensor_operations import reduce_tensors
 from parallel_ops.operation_names import operation_names
 from node_status import node_status
 import torch
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
 
 def execute_pcg(pcg):
     remaining_dependencies = {}
@@ -25,23 +29,36 @@ def execute_pcg(pcg):
 
 
 def process_node(node, pcg, remaining_dependencies, executor):
+    logging.debug(f"Processing node: {node.name}, status: {node.status}")
     node.status = node_status.RUNNING
     parent_outputs = []
     for parent in node.dependencies:
-        for parent_node in pcg[parent]:
-            for data in parent_node.data:
-                parent_outputs.append(data)
+        parent_node = pcg[parent]
+        for data in parent_node.data:
+            parent_outputs.append(data)
     
-    # send entire parent_outputs for combine, reduce
+    logging.debug(f"{node.name} - Parent Data: {parent_outputs}")
+    
+    # send entire parent_outputs for combine, reduce, replication, partition
     if len(node.machine_mapping) == 1:
+        logging.debug(f"{node.name} - Parallel op, MACHINE {node.machine_mapping[0]}")
+
         result = execute_node(node, parent_outputs, 0)
+        
         node.data.append(result)
+        logging.debug(f"{node.name} - Result: {node.data}")
+
     else:
         for index in range(len(node.machine_mapping)):
+            logging.debug(f"{node.name} - Algebraic op, MACHINE {node.machine_mapping[index]}")
+
             result = executor.submit(execute_node, node, parent_outputs[index], index)
-            node.data.append(result)
+
+            node.append(result)
     
-    node.status = node_status.COMPLTED
+    node.status = node_status.COMPLETED
+    logging.debug(f"{node.name} - Status: {node.status}")
+
     for child in [n for n in pcg if node.name in pcg[n].dependencies]:
         remaining_dependencies[child] -= 1
         if remaining_dependencies[child] == 0:
@@ -55,17 +72,21 @@ def execute_node(node, input, index):
         torch_device = torch.device(f"cuda:{device}")
     
     if node.operation:
-        for i in range(len(input)):
-            input[i] = input[i].to(torch_device)
+        # for i in range(len(input)):
+        #     input[i] = input[i].to(torch_device)
         
         if node.operation == operation_names.PARTITION:
+            logging.debug(f"Partitioning tensor {input[0]}")
             return partition_tensor(input[0], node.dim, node.num_partitions)
         elif node.operation == operation_names.COMBINE:
-            return combine_tensors(input, node.dim)
+            logging.debug(f"Combining tensors {input}")
+            return combine_tensors(input[0], node.dim)
         elif node.operation == operation_names.REPLICATE:
+            logging.debug(f"Replicating tensor {input[0]}")
             return replicate_tensor(input[0], node.num_replicas)
         elif node.operation == operation_names.REDUCE:
-            return reduce_tensors(input)
+            logging.debug(f"Reducing tensors {input}")
+            return reduce_tensors(input[0])
     else:
         return None
     

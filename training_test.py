@@ -4,7 +4,7 @@ import torch
 
 from training import execute_pcg
 from PCGNode import PCGNode
-from parallel_ops.operation_names import operation_names
+from parallel_ops.parallel_ops import operation_names
 from node_status import node_status
 
 class TestTraining(unittest.TestCase):

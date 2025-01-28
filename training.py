@@ -3,7 +3,7 @@ from parallel_ops.tensor_operations import partition_tensor
 from parallel_ops.tensor_operations import combine_tensors
 from parallel_ops.tensor_operations import replicate_tensor
 from parallel_ops.tensor_operations import reduce_tensors
-from parallel_ops.operation_names import operation_names
+from parallel_ops.parallel_ops import operation_names
 from node_status import node_status
 import torch
 import logging

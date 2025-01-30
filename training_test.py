@@ -50,7 +50,7 @@ class TestTraining(unittest.TestCase):
         node_d = PCGNode(
             id="d",
             type=node_types.OPERATION,
-            parents=[node_a],
+            parents=["a"],
             machine_mapping=[0, 1, 2],
             operation=parallel_ops.PARTITION,
             dim=0,
@@ -59,7 +59,7 @@ class TestTraining(unittest.TestCase):
         node_e = PCGNode(
             id="e",
             type=node_types.OPERATION,
-            parents=[node_b],
+            parents=["b"],
             machine_mapping=[0, 1, 2],
             operation=parallel_ops.PARTITION,
             dim=0,
@@ -68,14 +68,14 @@ class TestTraining(unittest.TestCase):
         node_f = PCGNode(
             id="f",
             type=node_types.OPERATION,
-            parents=[node_d, node_e],
+            parents=["d", "e"],
             operation=algebraic_ops.MATMUL,
         )
 
         node_g = PCGNode(
             id="g",
             type=node_types.OPERATION,
-            parents=[node_c],
+            parents=["c"],
             machine_mapping=[0, 1, 2],
             operation=parallel_ops.REPLICATE,
         )
@@ -83,14 +83,14 @@ class TestTraining(unittest.TestCase):
         node_h = PCGNode(
             id="h",
             type=node_types.OPERATION,
-            parents=[node_f, node_g],
+            parents=["f", "g"],
             operation=algebraic_ops.MATMUL,
         )
 
         node_i = PCGNode(
             id="i",
             type=node_types.OPERATION,
-            parents=[node_h],
+            parents=["h"],
             machine_mapping=[0],
             operation=parallel_ops.REDUCE,
         )
@@ -98,7 +98,7 @@ class TestTraining(unittest.TestCase):
         node_j = PCGNode(
             id="j",
             type=node_types.OUTPUT,
-            parents=[node_i],
+            parents=["i"],
         )
 
         pcg = {

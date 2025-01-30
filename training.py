@@ -33,6 +33,10 @@ def process_node(node, pcg, remaining_parents):
     logging.debug(f"Completed node: {node.id}, status: {node.status}")
 
     for child in [n for n in pcg if node.id in pcg[n].parents]:
+
+        for item in node.data:
+            pcg[child].data.append(item)
+
         remaining_parents[child] -= 1
         if remaining_parents[child] == 0:
             pcg[child].status = node_status.READY

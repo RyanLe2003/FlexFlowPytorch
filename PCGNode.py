@@ -12,7 +12,7 @@ class PCGNode:
     def __init__(self, id, type, parents, machine_mapping=None, operation=None, dim=None, data=None) -> None:
         self.id = id    
         self.type = type
-        self.data = data
+        self.data = data if data else []
         self.machine_mapping = machine_mapping
         self.operation = operation
         self.dim = dim
@@ -29,7 +29,7 @@ class PCGNode:
             return
         
         if self.operation == parallel_ops.PARTITION:
-            self.data = partition_tensor(self.data, self.machine_mapping, self.dim)
+            self.data = partition_tensor(self.data[0], self.machine_mapping, self.dim)
         elif self.operation == parallel_ops.COMBINE:
             self.data = combine_tensors(self.data, self.machine_mapping, self.dim)
         elif self.operation == parallel_ops.REPLICATE:

@@ -27,9 +27,6 @@ def execute_pcg(pcg):
             
             for future in futures:
                 future.result()
-    
-    
-
 
 def process_node(node, pcg, remaining_parents):
     logging.info(f"Processing node: {node.id}, status: {node.status}, thread: {threading.get_ident()}")

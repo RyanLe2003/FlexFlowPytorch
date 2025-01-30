@@ -33,7 +33,7 @@ class PCGNode:
         elif self.operation == parallel_ops.COMBINE:
             self.data = combine_tensors(self.data, self.machine_mapping, self.dim)
         elif self.operation == parallel_ops.REPLICATE:
-            self.data = replicate_tensor(self.data, self.machine_mapping)
+            self.data = replicate_tensor(self.data[0], self.machine_mapping)
         elif self.operation == parallel_ops.REDUCE:
             self.data = reduce_tensors(self.data, self.machine_mapping)
         elif self.operation == algebraic_ops.MATMUL:

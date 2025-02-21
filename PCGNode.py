@@ -7,6 +7,9 @@ from parallel_ops.parallel_ops import parallel_ops
 from algebraic_ops import algebraic_ops
 from node_status import node_status
 from node_types import node_types
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 import torch
 
@@ -28,19 +31,16 @@ class PCGNode:
         if self.type == node_types.INPUT:
             return
         if self.type == node_types.OUTPUT:
-            if len(self.parents) == 0:
-                return
-            self.data = self.parents[0].data
             return
         
         if self.operation == parallel_ops.PARTITION:
-            self.data = partition_tensor(self.data[0], self.machine_mapping, self.dim)
+            self.data = partition_tensor(self.data[0][0], self.machine_mapping, self.dim)
         elif self.operation == parallel_ops.COMBINE:
-            self.data = combine_tensors(self.data, self.machine_mapping, self.dim)
+            self.data = combine_tensors(self.data[0], self.machine_mapping, self.dim)
         elif self.operation == parallel_ops.REPLICATE:
-            self.data = replicate_tensor(self.data[0], self.machine_mapping)
+            self.data = replicate_tensor(self.data[0][0], self.machine_mapping)
         elif self.operation == parallel_ops.REDUCE:
-            self.data = reduce_tensors(self.data, self.machine_mapping)
+            self.data = reduce_tensors(self.data[0], self.machine_mapping)
         elif self.operation == algebraic_ops.MATMUL:
             self.data = [x @ y for x, y in zip(self.parents[0].data, self.parents[1].data)]
     
@@ -63,5 +63,5 @@ class PCGNode:
             right_grad = [torch.matmul(p.t(), g) for p, g in zip(self.parents[0].data, self.grad)]
             self.parents[0].grad = left_grad if self.parents[0].grad is None else [g1 + g2 for g1, g2 in zip(self.parents[0].grad, left_grad)]
             self.parents[1].grad = right_grad if self.parents[1].grad is None else [g1 + g2 for g1, g2 in zip(self.parents[1].grad, right_grad)]
-
+            self.data = [x @ y for x, y in zip(self.data[0], self.data[1])]
         

@@ -1,10 +1,13 @@
 import torch
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 def partition_tensor(tensor, machine_mapping, dim):
     chunks = torch.chunk(tensor, len(machine_mapping), dim)
 
     for machine_id, chunk in zip(machine_mapping, chunks):
-        print(f"Sending tensor {chunk} to machine {machine_id}")
+        logging.info(f"Sending tensor {chunk} to machine {machine_id}")
         device = torch.device(f"cuda:{machine_id}")
         chunk = chunk.to(device)
     

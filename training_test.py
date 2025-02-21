@@ -11,19 +11,11 @@ from algebraic_ops import algebraic_ops
 
 class TestTraining(unittest.TestCase):
     def setUp(self) -> None:
-        self.tensor1 = torch.tensor([1, 2, 3])
-        self.tensor2 = torch.tensor([4, 5, 6])
-        self.tensor3 = torch.tensor([2, 2, 2])
-    
-    # @patch("training.partition_tensor")
-    # @patch("training.combine_tensors")
-    # @patch("training.replicate_tensor")
-    # @patch("training.reduce_tensors")
+        self.tensor1 = torch.tensor([[1, 2], [3, 4]])  
+        self.tensor2 = torch.tensor([[5, 6], [7, 8]])  
+        self.tensor3 = torch.tensor([[2, 0], [0, 2]])
+
     def test_execute_pcg(self):
-        # mock_partition.return_value = [torch.tensor([1]), torch.tensor([2]), torch.tensor([3])]
-        # mock_combine.return_value = torch.tensor([1, 2, 3])
-        # mock_replicate.return_value = [torch.tensor([1, 2, 3]), torch.tensor([1, 2, 3])]
-        # mock_reduce.return_value = torch.tensor([2, 4, 6])
 
         node_a = PCGNode(
             id="a",
@@ -51,16 +43,16 @@ class TestTraining(unittest.TestCase):
             id="d",
             type=node_types.OPERATION,
             parents=["a"],
-            machine_mapping=[0, 1, 2],
+            machine_mapping=[0, 1],
             operation=parallel_ops.PARTITION,
-            dim=0,
+            dim=1,
         )
 
         node_e = PCGNode(
             id="e",
             type=node_types.OPERATION,
             parents=["b"],
-            machine_mapping=[0, 1, 2],
+            machine_mapping=[0, 1],
             operation=parallel_ops.PARTITION,
             dim=0,
         )
@@ -76,7 +68,7 @@ class TestTraining(unittest.TestCase):
             id="g",
             type=node_types.OPERATION,
             parents=["c"],
-            machine_mapping=[0, 1, 2],
+            machine_mapping=[0, 1],
             operation=parallel_ops.REPLICATE,
         )
 
@@ -115,33 +107,6 @@ class TestTraining(unittest.TestCase):
         }
 
         execute_pcg(pcg)
-
-        # self.assertEqual(node_a.status, node_status.COMPLETED)
-        # self.assertEqual(node_b.status, node_status.COMPLETED)
-        # self.assertEqual(node_c.status, node_status.COMPLETED)
-        # self.assertEqual(node_d.status, node_status.COMPLETED)
-        # self.assertEqual(node_e.status, node_status.COMPLETED)
-
-        # args, kwargs = mock_partition.call_args
-        # self.assertTrue(torch.equal(args[0], self.tensor1))
-        # self.assertEqual(args[1], 0)
-        # self.assertEqual(args[2], 3)
-
-        # args, kwargs = mock_combine.call_args
-        # self.assertTrue(torch.equal(args[0][0], torch.tensor([1])))
-        # self.assertTrue(torch.equal(args[0][1], torch.tensor([2])))
-        # self.assertTrue(torch.equal(args[0][2], torch.tensor([3])))
-        # self.assertEqual(args[1], 0)
-
-        # args, kwargs = mock_replicate.call_args
-        # self.assertTrue(torch.equal(args[0], torch.tensor([1, 2, 3])))
-        # self.assertEqual(args[1], 2)
-
-        # args, kwargs = mock_reduce.call_args
-        # self.assertTrue(torch.equal(args[0][0], torch.tensor([1, 2, 3])))
-        # self.assertTrue(torch.equal(args[0][1], torch.tensor([1, 2, 3])))
-
-        # self.assertTrue(torch.equal(node_e.data[0], torch.tensor([2, 4, 6])))
 
 if __name__ == "__main__":
     unittest.main()

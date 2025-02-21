@@ -21,6 +21,25 @@ def execute_pcg(pcg):
             
             for future in futures:
                 future.result()
+        
+        logging.debug("Executing PCG - Backward Pass")
+        backward_pass(pcg, executor)
+
+
+def backward_pass(pcg, executor):
+    remaining_children = {}
+    for id, node in pcg.items():
+        remaining_children[id] = len([n for n in pcg.values() if id in n.parents])
+
+    while any(node.backward_status != node_status.COMPLETED for node in pcg.values()):
+        ready_nodes = [node for node in pcg.values() if node.backward_status == node_status.READY]
+        
+        futures = []
+        for node in ready_nodes:
+            futures.append(executor.submit(process_node_backward, node, pcg, remaining_children))
+        
+        for future in futures:
+            future.result()
 
 
 def process_node(node, pcg, remaining_parents):
@@ -41,4 +60,18 @@ def process_node(node, pcg, remaining_parents):
         if remaining_parents[child] == 0:
             pcg[child].status = node_status.READY
 
+
+def process_node_backward(node, pcg, remaining_children):
+    logging.debug(f"Processing node backward: {node.id}, status: {node.backward_status}")
+
+    node.backward_status = node_status.RUNNING
+    node.backward_pass()
+    node.backward_status = node_status.COMPLETED
+
+    logging.debug(f"Completed node backward: {node.id}, status: {node.backward_status}")
+
+    for parent_id in node.parents:
+        remaining_children[parent_id] -= 1
+        if remaining_children[parent_id] == 0:
+            pcg[parent_id].backward_status = node_status.READY
     

@@ -8,6 +8,8 @@ from algebraic_ops import algebraic_ops
 from node_status import node_status
 from node_types import node_types
 
+import torch
+
 class PCGNode:
     def __init__(self, id, type, parents, machine_mapping=None, operation=None, dim=None, data=None) -> None:
         self.id = id    
@@ -18,6 +20,9 @@ class PCGNode:
         self.dim = dim
         self.parents = parents
         self.status = node_status.WAITING if parents else node_status.READY
+
+        self.grad = None
+        self.backward_status = node_status.WAITING
     
     def forward_pass(self) -> None:
         if self.type == node_types.INPUT:
@@ -38,4 +43,25 @@ class PCGNode:
             self.data = reduce_tensors(self.data, self.machine_mapping)
         elif self.operation == algebraic_ops.MATMUL:
             self.data = [x @ y for x, y in zip(self.parents[0].data, self.parents[1].data)]
+    
+    def backward_pass(self) -> None:
+        if self.type == node_types.OUTPUT:
+            # For output nodes, initialize gradient as ones
+            self.grad = [torch.ones_like(d) for d in self.data]
+        
+        if self.operation == parallel_ops.PARTITION:
+            self.grad = combine_tensors(self.grad, self.machine_mapping, self.dim)
+        elif self.operation == parallel_ops.COMBINE:
+            self.grad = partition_tensor(self.grad, self.machine_mapping, self.dim)
+        elif self.operation == parallel_ops.REPLICATE:
+            self.grad = reduce_tensors(self.grad, self.machine_mapping)
+        elif self.operation == parallel_ops.REDUCE:
+            self.grad = replicate_tensor(self.grad, self.machine_mapping)
+        elif self.operation == algebraic_ops.MATMUL:
+            # Assuming self.parents[0] is left matrix and self.parents[1] is right matrix
+            left_grad = [torch.matmul(g, p.t()) for g, p in zip(self.grad, self.parents[1].data)]
+            right_grad = [torch.matmul(p.t(), g) for p, g in zip(self.parents[0].data, self.grad)]
+            self.parents[0].grad = left_grad if self.parents[0].grad is None else [g1 + g2 for g1, g2 in zip(self.parents[0].grad, left_grad)]
+            self.parents[1].grad = right_grad if self.parents[1].grad is None else [g1 + g2 for g1, g2 in zip(self.parents[1].grad, right_grad)]
+
         

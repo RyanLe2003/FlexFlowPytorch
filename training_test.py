@@ -33,7 +33,7 @@ class TestTraining(unittest.TestCase):
 
         node_c = PCGNode(
             id="c",
-            type=node_types.OUTPUT,
+            type=node_types.INPUT,
             parents=[],
             machine_mapping=[],
             data=[self.tensor3],

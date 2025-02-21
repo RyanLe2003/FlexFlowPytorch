@@ -31,6 +31,7 @@ class PCGNode:
         if self.type == node_types.INPUT:
             return
         if self.type == node_types.OUTPUT:
+            self.backward_status = node_status.READY
             return
         
         if self.operation == parallel_ops.PARTITION:
@@ -42,12 +43,13 @@ class PCGNode:
         elif self.operation == parallel_ops.REDUCE:
             self.data = reduce_tensors(self.data[0], self.machine_mapping)
         elif self.operation == algebraic_ops.MATMUL:
-            self.data = [x @ y for x, y in zip(self.parents[0].data, self.parents[1].data)]
+            self.data = [x @ y for x, y in zip(self.data[0], self.data[1])]
     
     def backward_pass(self) -> None:
-        if self.type == node_types.OUTPUT:
+        if self.type == node_types.OUTPUT or self.grad == None:
             # For output nodes, initialize gradient as ones
-            self.grad = [torch.ones_like(d) for d in self.data]
+            # self.grad = [torch.ones_like(d) for d in self.data]
+            self.grad = self.data
         
         if self.operation == parallel_ops.PARTITION:
             self.grad = combine_tensors(self.grad, self.machine_mapping, self.dim)
@@ -61,7 +63,15 @@ class PCGNode:
             # Assuming self.parents[0] is left matrix and self.parents[1] is right matrix
             left_grad = [torch.matmul(g, p.t()) for g, p in zip(self.grad, self.parents[1].data)]
             right_grad = [torch.matmul(p.t(), g) for p, g in zip(self.parents[0].data, self.grad)]
-            self.parents[0].grad = left_grad if self.parents[0].grad is None else [g1 + g2 for g1, g2 in zip(self.parents[0].grad, left_grad)]
-            self.parents[1].grad = right_grad if self.parents[1].grad is None else [g1 + g2 for g1, g2 in zip(self.parents[1].grad, right_grad)]
-            self.data = [x @ y for x, y in zip(self.data[0], self.data[1])]
+            if self.parents[0].grad is None:
+                self.parents[0].grad = left_grad
+            else:
+                self.parents[0].grad = [g1 + g2 for g1, g2 in zip(self.parents[0].grad, left_grad)]
+            
+            if self.parents[1].grad is None:
+                self.parents[1].grad = right_grad
+            else:
+                self.parents[1].grad = [g1 + g2 for g1, g2 in zip(self.parents[1].grad, right_grad)]
+        
+        logging.debug(f"Tensor: {self.id}, {self.grad}")
         

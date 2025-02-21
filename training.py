@@ -28,7 +28,7 @@ def execute_pcg(pcg):
             for future in futures:
                 future.result()
         
-        logging.debug("Executing PCG - Backward Pass")
+        # logging.info("Executing PCG - Backward Pass")
         backward_pass(pcg, executor)
 
 
@@ -39,6 +39,11 @@ def backward_pass(pcg, executor):
 
     while any(node.backward_status != node_status.COMPLETED for node in pcg.values()):
         ready_nodes = [node for node in pcg.values() if node.backward_status == node_status.READY]
+
+
+        if not ready_nodes:
+            logging.warning("No ready nodes in backward pass. Possible deadlock.")
+            break
         
         futures = []
         for node in ready_nodes:
@@ -69,16 +74,24 @@ def process_node(node, pcg, remaining_parents):
 
 
 def process_node_backward(node, pcg, remaining_children):
-    logging.debug(f"Processing node backward: {node.id}, status: {node.backward_status}")
+    # logging.info("HEREEE")
+    logging.info(f"Processing node backward: {node.id}, status: {node.backward_status}")
 
     node.backward_status = node_status.RUNNING
     node.backward_pass()
     node.backward_status = node_status.COMPLETED
 
-    logging.debug(f"Completed node backward: {node.id}, status: {node.backward_status}")
+    logging.info(f"Completed node backward: {node.id}, status: {node.backward_status}")
 
     for parent_id in node.parents:
         remaining_children[parent_id] -= 1
         if remaining_children[parent_id] == 0:
+            
+
+
+
+
+            if node.grad:
+                pcg[parent_id].grad.append(node.grad)
             pcg[parent_id].backward_status = node_status.READY
     

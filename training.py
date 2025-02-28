@@ -74,24 +74,22 @@ def process_node(node, pcg, remaining_parents):
 
 
 def process_node_backward(node, pcg, remaining_children):
-    # logging.info("HEREEE")
-    logging.info(f"Processing node backward: {node.id}, status: {node.backward_status}")
+    logging.info(f"Processing node backward: {node.id}, status: {node.backward_status}, tensor grad: {node.grad}")
 
     node.backward_status = node_status.RUNNING
-    node.backward_pass()
+    node.backward_pass(pcg)
     node.backward_status = node_status.COMPLETED
 
-    logging.info(f"Completed node backward: {node.id}, status: {node.backward_status}")
+    logging.info(f"Completed node backward: {node.id}, status: {node.backward_status}, tensor grad: {node.grad}")
 
     for parent_id in node.parents:
         remaining_children[parent_id] -= 1
+        parent_node = pcg[parent_id]
         if remaining_children[parent_id] == 0:
-            
+            if parent_node.grad is None:
+                parent_node.grad = node.grad
+            else:
+                parent_node.grad = [g1 + g2 for g1, g2 in zip(parent_node.grad, node.grad)]
 
-
-
-
-            if node.grad:
-                pcg[parent_id].grad.append(node.grad)
             pcg[parent_id].backward_status = node_status.READY
     

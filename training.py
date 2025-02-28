@@ -31,6 +31,8 @@ def execute_pcg(pcg):
         # logging.info("Executing PCG - Backward Pass")
         backward_pass(pcg, executor)
 
+        # update values here (or call function)
+        update_parameters(pcg)
 
 def backward_pass(pcg, executor):
     remaining_children = {}
@@ -92,4 +94,12 @@ def process_node_backward(node, pcg, remaining_children):
                 parent_node.grad = [g1 + g2 for g1, g2 in zip(parent_node.grad, node.grad)]
 
             pcg[parent_id].backward_status = node_status.READY
+
+def update_parameters(pcg):
+    logging.info("Updating model parameters")
+    for node in pcg.values():
+        if node.type == node_types.WEIGHT:
+            node.update_parameter()
+            logging.info(f"Updated param for {node.id}: {node.data} ")
+
     

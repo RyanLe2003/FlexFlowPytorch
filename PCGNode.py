@@ -28,7 +28,7 @@ class PCGNode:
         self.backward_status = node_status.WAITING
     
     def forward_pass(self) -> None:
-        if self.type == node_types.INPUT:
+        if self.type == node_types.INPUT or self.type == node_types.WEIGHT:
             return
         if self.type == node_types.OUTPUT:
             self.backward_status = node_status.READY
@@ -50,7 +50,6 @@ class PCGNode:
             # For output nodes, initialize gradient as ones
             self.grad = [torch.ones_like(d) for d in self.data]
             
-        
         if self.operation == parallel_ops.PARTITION:
             self.grad = combine_tensors(self.grad, self.machine_mapping, self.dim)
         elif self.operation == parallel_ops.COMBINE:
@@ -73,3 +72,9 @@ class PCGNode:
             else:
                 pcg[self.parents[1]].grad = [g1 + g2 for g1, g2 in zip(pcg[self.parents[1]].grad, right_grad)]
         
+    def update_parameter(self):
+        if self.grad is not None:
+            # Simple SGD update
+            learning_rate = 0.01
+            self.data = [d - learning_rate * g for d, g in zip(self.data, self.grad)]
+            self.grad = None  # Reset gradient after update

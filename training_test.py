@@ -26,14 +26,14 @@ class TestTraining(unittest.TestCase):
 
         node_b = PCGNode(
             id="b",
-            type=node_types.INPUT,
+            type=node_types.WEIGHT,
             parents=[],
             data=[self.tensor2],
         )
 
         node_c = PCGNode(
             id="c",
-            type=node_types.INPUT,
+            type=node_types.WEIGHT,
             parents=[],
             machine_mapping=[],
             data=[self.tensor3],

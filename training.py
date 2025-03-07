@@ -4,6 +4,10 @@ import logging
 import threading
 import os
 from node_types import node_types
+from parallel_ops.parallel_ops import parallel_ops
+import torch
+import torch.optim as optim
+from torchviz import make_dot
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -14,8 +18,16 @@ def execute_pcg(pcg):
     print(f"Available CPU cores: {cpu_count}")
 
     remaining_parents = {}
+    output_node = None
+    weight_node = None
     for id, node in pcg.items():
         remaining_parents[id] = len(node.parents)
+        if (node.type == node_types.OUTPUT):
+            output_node = node
+        elif (node.type == node_types.WEIGHT):
+            weight_node = node
+    
+    optimizer = optim.SGD([weight_node.data[0]], lr=0.01)
 
     with ThreadPoolExecutor() as executor:
         while any(node.status != node_status.COMPLETED for node in pcg.values()):
@@ -28,34 +40,32 @@ def execute_pcg(pcg):
             for future in futures:
                 future.result()
         
-        # logging.info("Executing PCG - Backward Pass")
-        backward_pass(pcg, executor)
+        # output = output_node.outputs[0][0]
+        # logging.info(f"grad_fn {output_node.outputs[0][0].grad_fn}")
+        # dot = make_dot(output, params=dict(weight_node.data[0]))
+        # dot.render("computational_graph", format="png")
 
-        # update values here (or call function)
-        update_parameters(pcg)
+        logging.info(f"Executing PCG - Backward Pass, final output: {output_node.outputs[0][0]}")
 
-def backward_pass(pcg, executor):
-    remaining_children = {}
-    for id, node in pcg.items():
-        remaining_children[id] = len([n for n in pcg.values() if id in n.parents])
+        loss = torch.nn.functional.mse_loss(output_node.outputs[0][0], torch.ones_like(output_node.outputs[0][0]))
 
-    while any(node.backward_status != node_status.COMPLETED for node in pcg.values()):
-        ready_nodes = [node for node in pcg.values() if node.backward_status == node_status.READY]
+        logging.info(f"loss: {loss}")
+
+        optimizer.zero_grad()
+        loss.backward(retain_graph=True)
 
 
-        if not ready_nodes:
-            logging.warning("No ready nodes in backward pass. Possible deadlock.")
-            break
-        
-        futures = []
-        for node in ready_nodes:
-            futures.append(executor.submit(process_node_backward, node, pcg, remaining_children))
-        
-        for future in futures:
-            future.result()
+        for param_group in optimizer.param_groups:
+            for param in param_group['params']:
+                logging.info(f"Optimizing param: {param}")
+
+
+        optimizer.step()
+       
+        logging.info(f"NODE AFTER UPDATE: {weight_node.data}")
 
 def process_node(node, pcg, remaining_parents):
-    logging.info(f"Processing node: {node.id}, status: {node.status}, thread: {threading.get_ident()}")
+    logging.info(f"Processing node: {node.id}, status: {node.status}, thread: {threading.get_ident()}, data:{node.data}")
 
     if node.type == node_types.OUTPUT:
         logging.info(f"Output node: {node.id}, data: {node.data}")
@@ -64,42 +74,66 @@ def process_node(node, pcg, remaining_parents):
     node.forward_pass()
     node.status = node_status.COMPLETED
 
-    logging.info(f"Completed node: {node.id}, status: {node.status}")
+    logging.info(f"Completed node: {node.id}, status: {node.status}, output: {node.outputs}")
 
     for child in [n for n in pcg if node.id in pcg[n].parents]:
         remaining_parents[child] -= 1
         if remaining_parents[child] == 0:
             for parent in pcg[child].parents:
-                pcg[child].data.append(pcg[parent].data)
+                pcg[child].data.append(pcg[parent].outputs)
 
             pcg[child].status = node_status.READY
 
+# def backward_pass(pcg, executor):
+#     remaining_children = {}
+#     for id, node in pcg.items():
+#         remaining_children[id] = len([n for n in pcg.values() if id in n.parents])
 
-def process_node_backward(node, pcg, remaining_children):
-    logging.info(f"Processing node backward: {node.id}, status: {node.backward_status}, tensor grad: {node.grad}")
+#     while any(node.backward_status != node_status.COMPLETED for node in pcg.values()):
+#         ready_nodes = [node for node in pcg.values() if node.backward_status == node_status.READY]
 
-    node.backward_status = node_status.RUNNING
-    node.backward_pass(pcg)
-    node.backward_status = node_status.COMPLETED
 
-    logging.info(f"Completed node backward: {node.id}, status: {node.backward_status}, tensor grad: {node.grad}")
+#         if not ready_nodes:
+#             logging.warning("No ready nodes in backward pass. Possible deadlock.")
+#             break
+        
+#         futures = []
+#         for node in ready_nodes:
+#             futures.append(executor.submit(process_node_backward, node, pcg, remaining_children))
+        
+#         for future in futures:
+#             future.result()
 
-    for parent_id in node.parents:
-        remaining_children[parent_id] -= 1
-        parent_node = pcg[parent_id]
-        if remaining_children[parent_id] == 0:
-            if parent_node.grad is None:
-                parent_node.grad = node.grad
-            else:
-                parent_node.grad = [g1 + g2 for g1, g2 in zip(parent_node.grad, node.grad)]
 
-            pcg[parent_id].backward_status = node_status.READY
+# def process_node_backward(node, pcg, remaining_children):
+#     logging.info(f"Processing node backward: {node.id}, status: {node.backward_status}, tensor grad: {node.grad}")
 
-def update_parameters(pcg):
-    logging.info("Updating model parameters")
-    for node in pcg.values():
-        if node.type == node_types.WEIGHT:
-            node.update_parameter()
-            logging.info(f"Updated param for {node.id}: {node.data} ")
+#     node.backward_status = node_status.RUNNING
+#     node.backward_pass(pcg)
+#     node.backward_status = node_status.COMPLETED
+
+#     logging.info(f"Completed node backward: {node.id}, status: {node.backward_status}, tensor grad: {node.grad}")
+
+#     for parent_id in node.parents:
+#         remaining_children[parent_id] -= 1
+#         parent_node = pcg[parent_id]
+#         if remaining_children[parent_id] == 0:
+#             if parent_node.grad is None:
+#                 parent_node.grad = [g.clone() for g in node.grad]
+#             else:
+#                 # parent_node.grad = [
+#                 #     g1 + g2 if g1.shape == g2.shape else g1 + g2.expand_as(g1)
+#                 #     for g1, g2 in zip(parent_node.grad, node.grad)
+#                 # ]
+#                 parent_node.grad = [g1 + g2 for g1, g2 in zip(parent_node.grad, node.grad)]
+
+#             pcg[parent_id].backward_status = node_status.READY
+
+# def update_parameters(pcg):
+#     logging.info("Updating model parameters")
+#     for node in pcg.values():
+#         if node.type == node_types.WEIGHT:
+#             node.update_parameter()
+#             logging.info(f"Updated param for {node.id}: {node.data} ")
 
     

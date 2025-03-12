@@ -26,7 +26,9 @@ target_dt = DTensor.from_local(local_target, mesh, output_dt.placements)
 
 learning_rate = 0.01
 
-print(f"Before Weight: {weight_dt}")
+# Print only on rank 0
+if dist.get_rank() == 0:
+    print(f"Before Weight: {weight_dt}")
 
 for epoch in range(10):
     if local_weight.grad is not None:
@@ -42,12 +44,14 @@ for epoch in range(10):
     # Backward pass
     loss.backward()
     
-    # Manual gradient update (simplified)
+    # Manual gradient update
     with torch.no_grad():
         local_weight.data -= learning_rate * local_weight.grad
     
+    # synchronize
     dist.all_reduce(local_weight.data, op=dist.ReduceOp.SUM)
     local_weight.data /= dist.get_world_size()
-    
-    # print(f"Loss: {loss.item()}")
-print(f"After Weight: {weight_dt}")
+
+# Print only on rank 0
+if dist.get_rank() == 0:   
+    print(f"Final Weight: {weight_dt}")

@@ -27,6 +27,7 @@ target_dt = DTensor.from_local(local_target, mesh, output_dt.placements)
 learning_rate = 0.01
 
 print(f"Before Weight: {weight_dt}")
+
 for epoch in range(10):
     if local_weight.grad is not None:
         local_weight.grad.zero_()
@@ -44,11 +45,9 @@ for epoch in range(10):
     # Manual gradient update (simplified)
     with torch.no_grad():
         local_weight.data -= learning_rate * local_weight.grad
-        # Update the DTensor with the new weights
-        # weight_dt = DTensor.from_local(local_weight, mesh, [Shard(0), Replicate()])
-        # weight_dt.requires_grad
     
-    # Print progress
+    dist.all_reduce(local_weight.data, op=dist.ReduceOp.SUM)
+    local_weight.data /= dist.get_world_size()
     
-    print(f"Loss: {loss.item()}")
+    # print(f"Loss: {loss.item()}")
 print(f"After Weight: {weight_dt}")

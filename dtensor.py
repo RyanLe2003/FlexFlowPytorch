@@ -43,14 +43,14 @@ for epoch in range(10):
     
     # Backward pass
     loss.backward()
+
+    # synchronize
+    dist.all_reduce(local_weight.grad.data, op=dist.ReduceOp.SUM)
+    local_weight.grad.data /= dist.get_world_size()  
     
     # Manual gradient update
     with torch.no_grad():
         local_weight.data -= learning_rate * local_weight.grad
-    
-    # synchronize
-    dist.all_reduce(local_weight.data, op=dist.ReduceOp.SUM)
-    local_weight.data /= dist.get_world_size()
 
 # Print only on rank 0
 if dist.get_rank() == 0:   

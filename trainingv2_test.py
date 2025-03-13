@@ -19,8 +19,6 @@ class TestTrainingv2Basic(unittest.TestCase):
         torch.distributed.init_process_group(backend="nccl")
 
         self.local_weight = torch.randn(4, 2, device="cuda", requires_grad=True)
-        torch.nn.init.xavier_uniform_(self.local_weight)
-        # self.local_input = torch.randn(1, 4, device="cuda")
         self.local_input = torch.tensor([[1, 1, 1, 1]], device="cuda", dtype=torch.float32)
         self.local_target = torch.tensor([[2, 2]], dtype=torch.float32)
 
@@ -71,13 +69,31 @@ class TestTrainingv2Basic(unittest.TestCase):
             parents=["repInput", "repWeight"]
         )
 
+        allR_reduce_node = PCGNode(
+            id="allR_Reduce",
+            input=[],
+            type=parallel_ops.REDUCE,
+            machine_mapping=None,
+            placements=None,
+            parents=["matmul"]
+        )
+
+        allR_replicate_node = PCGNode(
+            id="allR_Rep",
+            input=[],
+            type=parallel_ops.REPLICATE,
+            machine_mapping=init_device_mesh("cuda", (2, 2), mesh_dim_names=("dp", "tp")),
+            placements=[Replicate(), Replicate()],
+            parents=["allR_Reduce"],
+        )
+
         output_node = PCGNode(
             id="output",
             input=[],
             type=node_types.OUTPUT,
             machine_mapping=None,
             placements=None,
-            parents=["matmul"]
+            parents=["allR_Rep"]
         )
 
         pcg = {
@@ -86,10 +102,12 @@ class TestTrainingv2Basic(unittest.TestCase):
             "repInput": repInput_node,
             "repWeight": repWeight_node,
             "matmul": matmul_node,
+            "allR_Reduce": allR_reduce_node,
+            "allR_Rep": allR_replicate_node,
             "output": output_node,
         }
 
-        num_epochs = 20
+        num_epochs = 10
         execute_pcg(pcg, self.local_target, num_epochs)
             
             

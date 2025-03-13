@@ -11,12 +11,12 @@ def execute_pcg(pcg, local_target, num_iterations):
     remaining_parents = {}
 
     parameters = []
-    parameters_node_order = []
+    output_node = None
     for id, node in pcg.items():
-
+        if node.type == node_types.OUTPUT:
+                output_node = node
         if node.type == node_types.WEIGHT:
             parameters.append(node.input[0])
-            parameters_node_order.append(node)
 
     learning_rate = 0.01
     optimizer = torch.optim.SGD(params=parameters, lr=learning_rate)
@@ -48,11 +48,6 @@ def execute_pcg(pcg, local_target, num_iterations):
         # but think will have to change to a more general way 
         # to get the target to all valid machines.
         target_dt = DTensor.from_local(local_target, init_device_mesh("cuda", (2, 2), mesh_dim_names=("dp", "tp")), [Replicate(), Replicate()])
-
-        output_node = None
-        for id, node in pcg.items():
-            if node.type == node_types.OUTPUT:
-                output_node = node
         
         loss_dt = ((output_node.output - target_dt) ** 2).mean()
         loss = loss_dt.to_local()
@@ -63,17 +58,6 @@ def execute_pcg(pcg, local_target, num_iterations):
         optimizer.step()
 
         print(f"Epoch {epoch}, Loss: {loss.item()}")
-        
-
-
-
-        # print(f"Epoch {epoch}, Loss: {loss.item()}")
-        # if dist.get_rank() == 0:
-        #     print(f"PRINTING OUT PCG, EPOCH{epoch}")
-        #     print_pcg(pcg)
-
-
-
 
 
 def process_node(node, pcg, remaining_parents):
@@ -85,10 +69,7 @@ def process_node(node, pcg, remaining_parents):
         remaining_parents[child] -= 1
         if remaining_parents[child] == 0:
             for parent in pcg[child].parents:
-                # print(f"Appending to {pcg[child].id}: {pcg[parent].output}")
                 pcg[child].input.append(pcg[parent].output)
-            
-            # print(f"After all appends: {pcg[child].input}")
             
             pcg[child].status = node_status.READY
     

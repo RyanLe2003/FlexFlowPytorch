@@ -32,8 +32,6 @@ class PCGNode:
         self.type = type
         self.machine_mapping = machine_mapping
         self.placements = placements
-        # self.local_tensor = local_tensor
-        # self.dtensor = dtensor
         self.parents = parents
         self.status = node_status.WAITING if parents else node_status.READY
     
@@ -58,14 +56,12 @@ class PCGNode:
             self.output = matmulres
         # elif self.type == parallel_ops.COMBINE:
 
-
-
-        # elif self.type == parallel_ops.REDUCE:
-
-
-
-        
-        
+        elif self.type == parallel_ops.REDUCE:
+            # NOTE: there may be a case where I end on just a reduce so i might want it to still be a DTensor
+            # but that is not the case here (will look into)
+            local_step = self.input[0].to_local()  # Convert DTensor to local tensor for reduction
+            dist.all_reduce(local_step, op=dist.ReduceOp.SUM)  # Perform reduction (sum across ranks)
+            self.output = local_step
 
 
 

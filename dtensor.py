@@ -3,7 +3,7 @@ print(torch.__version__)
 import torch.distributed as dist
 from torch.distributed.device_mesh import init_device_mesh
 from torch.distributed._tensor import DTensor
-from torch.distributed._tensor import Shard, Replicate, distribute_tensor
+from torch.distributed._tensor import Shard, Replicate, distribute_tensor, Partial
 
 import os
 
@@ -41,8 +41,14 @@ for epoch in range(20):
     optimizer.zero_grad()
 
     # Forward pass
-    output_dt = torch.matmul(input_dt, weight_dt)
-    
+    step = torch.matmul(input_dt, weight_dt)
+
+
+    #ALL REDUCE FUNC
+    local_step = step.to_local()  # Convert DTensor to local tensor for reduction
+    dist.all_reduce(local_step, op=dist.ReduceOp.SUM)  # Perform reduction (sum across ranks)
+    output_dt = DTensor.from_local(local_step, mesh, [Replicate(), Replicate()]) #replicate
+
     # compute loss
     loss_dt = ((output_dt - target_dt) ** 2).mean()
     loss = loss_dt.to_local()

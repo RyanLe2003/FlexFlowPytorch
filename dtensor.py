@@ -14,7 +14,7 @@ torch.distributed.init_process_group(backend="nccl")
 mesh = init_device_mesh("cuda", (2, 2), mesh_dim_names=("dp", "tp"))
 
 local_weight = torch.randn(4, 2, device="cuda", requires_grad=True)
-local_input = torch.randn(1, 4, device="cuda")
+local_input = torch.tensor([[1, 1, 1, 1]], device="cuda", dtype=torch.float32)
 
 # # partition test
 # device_mesh = init_device_mesh("cuda", (2, ))
@@ -26,16 +26,19 @@ weight_dt.requires_grad
 input_dt = DTensor.from_local(local_input, mesh, [Replicate(), Shard(1)])
 
 output_dt = torch.matmul(input_dt, weight_dt)
-local_target = torch.randn_like(output_dt.to_local())
-target_dt = DTensor.from_local(local_target, mesh, output_dt.placements)
+local_target = torch.tensor([[2, 2]], dtype=torch.float32)
+target_dt = DTensor.from_local(local_target, mesh, [Replicate(), Replicate()])
+print(f"target: {target_dt}")
 
 learning_rate = 0.01
+optimizer = torch.optim.SGD([local_weight], lr=learning_rate)
+print(f"Before Weight: {weight_dt}")
 
-# print(f"Before Weight: {weight_dt}")
-
-for epoch in range(1):
-    if local_weight.grad is not None:
-        local_weight.grad.zero_()
+for epoch in range(20):
+    # if local_weight.grad is not None:
+    #     local_weight.grad.zero_()
+    
+    optimizer.zero_grad()
 
     # Forward pass
     output_dt = torch.matmul(input_dt, weight_dt)
@@ -45,7 +48,7 @@ for epoch in range(1):
     loss = loss_dt.to_local()
     
     # Backward pass
-    loss.backward()
+    loss.backward(retain_graph=True)
 
     # print(f"weight: {weight_dt}")
 
@@ -56,9 +59,14 @@ for epoch in range(1):
     # print(f"weight after sync: {weight_dt}")
     
     # Manual gradient update
-    with torch.no_grad():
-        local_weight.data -= learning_rate * local_weight.grad
+    # with torch.no_grad():
+    #     local_weight.data -= learning_rate * local_weight.grad
 
+    optimizer.step()
+
+    print(f"Epoch {epoch}, Loss: {loss.item()}")
+
+print(f"Final Weight: {weight_dt}")
 # combine test
 # final_weight_dt = weight_dt.redistribute(placements=[Replicate()])
 # print(f"Final Weight (Replicated): {final_weight_dt.to_local()}")

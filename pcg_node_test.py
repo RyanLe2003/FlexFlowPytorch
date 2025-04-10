@@ -1,9 +1,17 @@
-from PCGNode import Partition, Replicate, Combine, Reduce
+from parallel_ops.combine import Combine
+from parallel_ops.partition import Partition
+from parallel_ops.replicate import Replicate
+from parallel_ops.reduce import Reduce
+
 import torch.nn as nn
 import torch
 from concurrent.futures import ThreadPoolExecutor
 
-class testModelWPartition(nn.Module):
+
+class TestModel1(nn.Module):
+    """
+    9.b from Unity paper
+    """
     def __init__(self) -> None:
         super().__init__()
         self.weight = nn.Parameter(torch.rand((4, 4)))
@@ -12,7 +20,6 @@ class testModelWPartition(nn.Module):
     def multiply(a, b):
         res = torch.matmul(a, b)
         return res
-
     
     def forward(self, x):
         parts = Partition.apply(x, ["cuda:0", "cuda:1", "cuda:2", "cuda:3"], 1)
@@ -22,49 +29,42 @@ class testModelWPartition(nn.Module):
         with ThreadPoolExecutor() as executor:
             for i in range(len(parts)):
                 futures.append(executor.submit(self.multiply, parts[i], parts2[i]))
-        
-        # manual implementation of reduce
-        # res = 0
-        # for future in futures: 
-        #     res += future.result().to("cuda:0")
-        #     print(res)
 
         vals = []
         for future in futures:
             vals.append(future.result())
 
-        res = Reduce.apply(vals, ["cuda:0"])
-        
+        res = Reduce.apply(["cuda:0"], *vals)
         return res
 
-def PartitionTest():
-    model = testModelWPartition()
+
+def Test1():
+    model = TestModel1()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
     criterion = nn.MSELoss()
 
-
     input_tensor = torch.rand((4, 4)).to(device)
     target = torch.rand((4, 4)).to(device)
 
-    for epoch in range(20):
+    for epoch in range(10):
         optimizer.zero_grad()
-
         output = model(input_tensor)
 
         loss = criterion(output, target)
-
         loss.backward()
 
         optimizer.step()
         
         print(f"Epoch {epoch}, Loss: {loss.item():.4f}")
 
-PartitionTest()
 
-class testModel2(nn.Module):
+class TestModel2(nn.Module):
+    """
+    9.a from Unity paper
+    """
     def __init__(self) -> None:
         super().__init__()
         self.weight = nn.Parameter(torch.rand((4, 4)))
@@ -87,35 +87,33 @@ class testModel2(nn.Module):
         for future in futures:
             vals.append(future.result())
 
-        res = Combine.apply(vals, ["cuda:0"], 0)
+        res = Combine.apply(["cuda:0"], 0, *vals)
         return res
-    
+
+
 def Test2():
-    model = testModel2()
+    model = TestModel2()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
     criterion = nn.MSELoss()
 
-
     input_tensor = torch.rand((4, 4), requires_grad=True).to(device)
     target = torch.rand((4, 4)).to(device)
 
-    for epoch in range(20):
+    for epoch in range(10):
         optimizer.zero_grad()
-
         output = model(input_tensor)
 
         loss = criterion(output, target)
-
         loss.backward()
 
         optimizer.step()
         
         print(f"Epoch {epoch}, Loss: {loss.item():.4f}")
 
-
-# Test2()
+Test1()
+Test2()
 
 

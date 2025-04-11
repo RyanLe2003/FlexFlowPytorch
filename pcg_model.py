@@ -62,7 +62,7 @@ class PCGModel(nn.Module):
                 
                 for future in futures:
                     future.result() # block here until finishes
-            
+
         return values['output']
 
 

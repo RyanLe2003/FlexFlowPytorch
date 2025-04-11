@@ -6,6 +6,7 @@ from replicate import ReplicateNode
 from reduce import ReduceNode
 from matmul import MatmulNode
 from output import OutputNode
+from relu import ReLUNode
 
 def parse_graph(json_graph):
     """
@@ -53,7 +54,40 @@ def parse_graph(json_graph):
                 obj = MatmulNode(name_refac, par_refac)
 
                 node_map[name_refac] = obj
-                dependency_graph[name_refac] = dependency_graph_parents
+
+            for i in range(len(node["machine_mapping"])):
+                name_refac = f"{node_name}_{i}"
+
+                new_par = []
+                for par in node_parents:
+                    if par in refactor_info:
+                        new_par.append(refactor_info[par][i])
+                    else:
+                        new_par.append(par)
+
+                dependency_graph[name_refac] = new_par
+            
+            refactor_info[node_name] = [f"{node_name}_{i}" for i in range(len(node["machine_mapping"]))]
+        
+        if node_type == "ReLU":
+            for i in range(len(node["machine_mapping"])):
+                name_refac = f"{node_name}_{i}"
+                par_refac = [f"{par}_{i}" for par in node_parents]            
+                obj = ReLUNode(name_refac, par_refac)
+
+                node_map[name_refac] = obj
+            
+            for i in range(len(node["machine_mapping"])):
+                name_refac = f"{node_name}_{i}"
+
+                new_par = []
+                for par in node_parents:
+                    if par in refactor_info:
+                        new_par.append(refactor_info[par][i])
+                    else:
+                        new_par.append(par)
+
+                dependency_graph[name_refac] = new_par
             
             refactor_info[node_name] = [f"{node_name}_{i}" for i in range(len(node["machine_mapping"]))]
             
@@ -63,7 +97,7 @@ def parse_graph(json_graph):
             node_map[node_name] = obj
             dependency_graph[node_name] = dependency_graph_parents
 
-            refactor_info[node_name] = [f"{node_name}_{i}" for i in range(len(node["machine_mapping"]))]
+            # refactor_info[node_name] = [f"{node_name}_{i}" for i in range(len(node["machine_mapping"]))]
         
         if node_type == "Replicate":
             obj = ReplicateNode(node_name, node_parents, node["machine_mapping"])
@@ -71,7 +105,7 @@ def parse_graph(json_graph):
             node_map[node_name] = obj
             dependency_graph[node_name] = dependency_graph_parents
 
-            refactor_info[node_name] = [f"{node_name}_{i}" for i in range(len(node["machine_mapping"]))]
+            # refactor_info[node_name] = [f"{node_name}_{i}" for i in range(len(node["machine_mapping"]))]
         
         if node_type == "Reduce":
             if node_parents[0] in refactor_info:

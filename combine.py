@@ -27,7 +27,7 @@ class Combine(torch.autograd.Function):
         
         res = torch.cat(tensors_on_mm, dim)
 
-        return res
+        return tuple([res])
 
     @staticmethod
     def backward(ctx, grad):

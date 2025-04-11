@@ -1,7 +1,7 @@
-from parallel_ops.combine import Combine
-from parallel_ops.partition import Partition
-from parallel_ops.replicate import Replicate
-from parallel_ops.reduce import Reduce
+from combine import Combine
+from partition import Partition
+from replicate import Replicate
+from reduce import Reduce
 
 import torch.nn as nn
 import torch
@@ -34,7 +34,7 @@ class TestModel1(nn.Module):
         for future in futures:
             vals.append(future.result())
 
-        res = Reduce.apply(["cuda:0"], *vals)
+        res = Reduce.apply(["cuda:0"], *vals)[0]
         return res
 
 
@@ -87,7 +87,7 @@ class TestModel2(nn.Module):
         for future in futures:
             vals.append(future.result())
 
-        res = Combine.apply(["cuda:0"], 0, *vals)
+        res = Combine.apply(["cuda:0"], 0, *vals)[0]
         return res
 
 

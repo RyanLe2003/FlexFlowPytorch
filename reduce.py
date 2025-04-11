@@ -7,7 +7,10 @@ class ReduceNode(PCGNode):
         self.machine_mapping = machine_mapping
 
     def forward(self, input_values_all):
-        return Reduce.apply(self.machine_mapping, input_values_all[self.parents[0]])
+        tensors = []
+        for parent in self.parents:
+            tensors.append(input_values_all[parent])
+        return Reduce.apply(self.machine_mapping, *tensors)
 
 class Reduce(torch.autograd.Function):
     @staticmethod
@@ -22,7 +25,7 @@ class Reduce(torch.autograd.Function):
         for tensor in tensors: 
             res += tensor.to(machine_mapping[0])
         
-        return res
+        return tuple([res])
 
     @staticmethod
     def backward(ctx, grad):

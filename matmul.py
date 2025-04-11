@@ -6,4 +6,4 @@ class MatmulNode(PCGNode):
         super().__init__(name, parents)
 
     def forward(self, input_values_all):
-        return torch.matmul(input_values_all[self.parents[0]], input_values_all[self.parents[1]])
+        return tuple([torch.matmul(input_values_all[self.parents[0]], input_values_all[self.parents[1]])])

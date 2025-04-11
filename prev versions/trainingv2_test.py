@@ -1,7 +1,7 @@
 import unittest
 import torch
 import os
-from PCGNode import PCGNode
+from pcg_node import PCGNode
 from node_types import node_types
 from parallel_ops.parallel_ops import parallel_ops
 from torch.distributed.device_mesh import init_device_mesh

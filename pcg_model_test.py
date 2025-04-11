@@ -1,5 +1,7 @@
 import torch
 from parse_graph import parse_graph
+from pcg_model import PCGModel
+import torch.nn as nn
 
 pcg1 = [
     {
@@ -46,7 +48,25 @@ pcg1 = [
 ]
 
 input, weights, node_map, dependency_graph = parse_graph(pcg1)
-print(input)
-print(weights)
-print(node_map)
-print(dependency_graph)
+
+model = PCGModel(node_map, weights, dependency_graph)
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+target = torch.rand((4, 4)).to(device)
+
+optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+criterion = nn.MSELoss()
+
+for epoch in range(10):
+    optimizer.zero_grad()
+    output = model(input)
+
+    loss = criterion(output, target)
+    loss.backward()
+
+    optimizer.step()
+    
+    print(f"Epoch {epoch}, Loss: {loss.item():.4f}")
+
+
+
+

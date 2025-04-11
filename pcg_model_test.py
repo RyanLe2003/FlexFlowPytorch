@@ -47,25 +47,94 @@ pcg1 = [
     }
 ]
 
-input, weights, node_map, dependency_graph = parse_graph(pcg1)
+def test1():
+    input, weights, node_map, dependency_graph = parse_graph(pcg1)
 
-model = PCGModel(node_map, weights, dependency_graph)
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-target = torch.rand((4, 4)).to(device)
+    model = PCGModel(node_map, weights, dependency_graph)
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    target = torch.rand((4, 4)).to(device)
 
-optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
-criterion = nn.MSELoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+    criterion = nn.MSELoss()
 
-for epoch in range(10):
-    optimizer.zero_grad()
-    output = model(input)
+    for epoch in range(10):
+        optimizer.zero_grad()
+        output = model(input)
 
-    loss = criterion(output, target)
-    loss.backward()
+        loss = criterion(output, target)
+        loss.backward()
 
-    optimizer.step()
-    
-    print(f"Epoch {epoch}, Loss: {loss.item():.4f}")
+        optimizer.step()
+        
+        print(f"Epoch {epoch}, Loss: {loss.item():.4f}")
+
+
+pcg2 = [
+    {
+        "name" : "input",
+        "type" : "Input",
+        "value" : torch.rand((4, 4))
+    },
+    {
+        "name" : "partition1",
+        "type" : "Partition",
+        "parents" : ["input"],
+        "machine_mapping" : ["cuda:0", "cuda:1", "cuda:2", "cuda:3"],
+        "dim": 0
+    },
+    {
+        "name" : "weight1",
+        "type" : "Weight",
+        "value" : torch.rand((4, 4))
+    },
+    {
+        "name" : "replicate1",
+        "type" : "Replicate",
+        "parents" : ["weight1"],
+        "machine_mapping" : ["cuda:0", "cuda:1", "cuda:2", "cuda:3"],
+    },
+    {
+        "name" : "matmul1",
+        "type" : "Matmul",
+        "parents" : ["partition1", "replicate1"],
+        "machine_mapping" : ["cuda:0", "cuda:1", "cuda:2", "cuda:3"],
+    },
+    {
+        "name" : "combine1",
+        "type" : "Combine",
+        "parents" : ["matmul1"],
+        "machine_mapping" : ["cuda:0"],
+        "dim" : 0
+    },
+    {
+        "name" : "OUTPUT",
+        "type" : "Output",
+        "parents" : ["combine1"]
+    }
+]
+
+def test2():
+    input, weights, node_map, dependency_graph = parse_graph(pcg2)
+
+    model = PCGModel(node_map, weights, dependency_graph)
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    target = torch.rand((4, 4)).to(device)
+
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+    criterion = nn.MSELoss()
+
+    for epoch in range(10):
+        optimizer.zero_grad()
+        output = model(input)
+
+        loss = criterion(output, target)
+        loss.backward()
+
+        optimizer.step()
+        
+        print(f"Epoch {epoch}, Loss: {loss.item():.4f}")
+
+test2()
 
 
 

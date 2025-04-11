@@ -8,7 +8,11 @@ class CombineNode(PCGNode):
         self.dim = dim
     
     def forward(self, input_values_all):
-        return Combine.apply(self.machine_mapping, self.dim, input_values_all[self.parents[0]])
+        tensors = []
+        for parent in self.parents:
+            tensors.append(input_values_all[parent])
+
+        return Combine.apply(self.machine_mapping, self.dim, *tensors)
     
 
 class Combine(torch.autograd.Function):

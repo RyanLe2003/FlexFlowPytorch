@@ -6,7 +6,7 @@ import logging
 import time
 import threading
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 class PCGModel(nn.Module):
     def __init__(self, pcg, weights, dependency_graph):
         super().__init__()
@@ -20,7 +20,7 @@ class PCGModel(nn.Module):
     def exec_forward(self, node, values):
         thread_id = threading.get_ident()
         start_time = time.time()
-        logging.info(f"START: {node} (Thread {thread_id}) at {start_time:.4f}")
+        logging.debug(f"START: {node} (Thread {thread_id}) at {start_time:.4f}")
 
         res = self.pcg[node].forward(values)
 

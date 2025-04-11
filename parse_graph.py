@@ -83,15 +83,15 @@ def parse_graph(json_graph):
 
             node_map[node_name] = obj  
         
-        if node_type == "Combine":
-            obj = CombineNode(node_name, node_parents, node["machine_mapping"], node["dim"])
-
-            node_map[node_name] = obj
-            
+        if node_type == "Combine":            
             if node_parents[0] in refactor_info:
                 dependency_graph[node_name] = refactor_info[node_parents[0]]
+                obj = CombineNode(node_name, refactor_info[node_parents[0]], node["machine_mapping"], node["dim"])
             else:
                 dependency_graph[node_name] = dependency_graph_parents
+                obj = CombineNode(node_name, node_parents, node["machine_mapping"], node["dim"])
+            
+            node_map[node_name] = obj
     
     return input, weights, node_map, dependency_graph
 

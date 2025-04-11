@@ -1,7 +1,12 @@
 import torch.nn as nn
 
 from concurrent.futures import ThreadPoolExecutor
+import logging
 
+import time
+import threading
+
+logging.basicConfig(level=logging.DEBUG)
 class PCGModel(nn.Module):
     def __init__(self, pcg, weights, dependency_graph):
         super().__init__()
@@ -13,6 +18,10 @@ class PCGModel(nn.Module):
     
     
     def exec_forward(self, node, values):
+        thread_id = threading.get_ident()
+        start_time = time.time()
+        logging.info(f"START: {node} (Thread {thread_id}) at {start_time:.4f}")
+
         res = self.pcg[node].forward(values)
 
         if len(res) > 1:
@@ -29,6 +38,9 @@ class PCGModel(nn.Module):
                     self.ready_nodes.append(n)
         
         self.ready_nodes.remove(node)
+
+        end_time = time.time()
+        logging.info(f"END: {node} (Thread {thread_id}) at {end_time:.4f}, Duration: {end_time - start_time:.4f}s")
     
     def forward(self, input_tensor):
         for name, parents in self.dependency_graph.items():  # this creates issues for input/weight dependencies

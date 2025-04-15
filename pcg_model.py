@@ -46,7 +46,7 @@ class PCGModel(nn.Module):
         for name, parents in self.dependency_graph.items():  # this creates issues for input/weight dependencies
             self.remaining_parents[name] = len(parents)
 
-        values = {'input': input_tensor}
+        values = {'input_0': input_tensor}
         for key, param in self.weights.items():
             values[key] = param
 

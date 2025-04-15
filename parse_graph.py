@@ -31,7 +31,7 @@ def parse_graph(json_graph):
 
         dependency_graph_parents = []
         for parent in node_parents:
-            if parent != input_name and parent not in weights.keys():
+            if parent != input_name and f"{parent}_0" not in weights.keys():
                 dependency_graph_parents.append(parent)
 
         if node_type == "Input":
@@ -39,13 +39,17 @@ def parse_graph(json_graph):
             input_name = node_name
         
         if node_type == "Weight":
-            weights[node_name] = nn.Parameter(node["value"])
+            weights[f"{node_name}_{0}"] = nn.Parameter(node["value"])
             
         if node_type == "Output":
-            obj = OutputNode("output", node_parents)
+            if node_parents[0] in refactor_info:
+                dependency_graph["output"] = refactor_info[node_parents[0]]
+                obj = OutputNode("output", refactor_info[node_parents[0]])
+            else:
+                dependency_graph["output"] = dependency_graph_parents
+                obj = OutputNode("output", node_parents)
+            
             node_map["output"] = obj
-
-            dependency_graph["output"] = dependency_graph_parents
 
         if node_type == "Matmul":
             for i in range(len(node["machine_mapping"])):
@@ -59,7 +63,7 @@ def parse_graph(json_graph):
                 name_refac = f"{node_name}_{i}"
 
                 new_par = []
-                for par in node_parents:
+                for par in dependency_graph_parents:
                     if par in refactor_info:
                         new_par.append(refactor_info[par][i])
                     else:
@@ -81,7 +85,7 @@ def parse_graph(json_graph):
                 name_refac = f"{node_name}_{i}"
 
                 new_par = []
-                for par in node_parents:
+                for par in dependency_graph_parents:
                     if par in refactor_info:
                         new_par.append(refactor_info[par][i])
                     else:
@@ -92,12 +96,11 @@ def parse_graph(json_graph):
             refactor_info[node_name] = [f"{node_name}_{i}" for i in range(len(node["machine_mapping"]))]
             
         if node_type == "Partition":
-            obj = PartitionNode(node_name, node_parents, node["machine_mapping"], node["dim"])
+            node_parents_refac = [f"{parent}_0" for parent in node_parents]
+            obj = PartitionNode(node_name, node_parents_refac, node["machine_mapping"], node["dim"])
 
             node_map[node_name] = obj
             dependency_graph[node_name] = dependency_graph_parents
-
-            # refactor_info[node_name] = [f"{node_name}_{i}" for i in range(len(node["machine_mapping"]))]
         
         if node_type == "Replicate":
             obj = ReplicateNode(node_name, node_parents, node["machine_mapping"])

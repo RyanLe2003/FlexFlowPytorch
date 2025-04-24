@@ -1,39 +1,31 @@
 from pcg_node import PCGNode
 import torch
+import torch.distributed as dist
 
 class ReduceNode(PCGNode):
-    def __init__(self, name, parents, machine_mapping):
+    def __init__(self, name, parents, machine_view):
         super().__init__(name, parents)
-        self.machine_mapping = machine_mapping
+        self.machine_view = machine_view
 
     def forward(self, input_values_all):
-        tensors = []
-        for parent in self.parents:
-            tensors.append(input_values_all[parent])
-        return Reduce.apply(self.machine_mapping, *tensors)
+        return Reduce.apply(dist.new_group(self.machine_view), input_values_all[self.parent[0]])
 
 class Reduce(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, machine_mapping, *tensors):
-        org_devices = []
-        for tensor in tensors:
-            org_devices.append(tensor.device)
+    def forward(ctx, machine_view, tensor):
+        ctx.machine_view = machine_view
 
-        ctx.org_devices = org_devices
+        tensor_cop = tensor.clone()
+        dist.reduce(tensor_cop, dst=0, group=machine_view, async_op=False)
 
-        res = 0
-        for tensor in tensors: 
-            res += tensor.to(machine_mapping[0])
-        
-        return tuple([res])
+        global_rank = dist.get_rank()
+
+        if global_rank == 0:
+            return tensor_cop
+        else:
+            return None
 
     @staticmethod
-    def backward(ctx, grad):
-        clones = [grad.clone() for _ in range((len(ctx.org_devices)))]
-        res = []
-
-        for machine, clone in zip(ctx.org_devices, clones):
-            clone = clone.to(machine)
-            res.append(clone)
-        
-        return None, *res
+    def backward(ctx, grads):
+        dist.broadcast(grads, src=0, group=ctx.machine_view, async_op=False)  # commun proc at 0
+        return grads, None

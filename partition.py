@@ -1,33 +1,75 @@
 from pcg_node import PCGNode
 import torch
+import torch.distributed as dist
+import os
 
 class PartitionNode(PCGNode):
-    def __init__(self, name, parents, machine_mapping, dim):
+    def __init__(self, name, parents, machine_view, dim):
         super().__init__(name, parents)
-        self.machine_mapping = machine_mapping
+        self.machine_view = machine_view
         self.dim = dim
 
     def forward(self, input_values_all):
-        return Partition.apply(input_values_all[self.parents[0]], self.machine_mapping, self.dim)
+        if self.parents[0] in input_values_all:
+            tensor = input_values_all[self.parents[0]]
+        else:
+            tensor = None
+        
+        return Partition.apply(tensor, dist.new_group(self.machine_view), self.dim)
 
 
 class Partition(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, tensor, machine_mapping, dim):
-        ctx.input_device = tensor.device
+    def forward(ctx, tensor, machine_view, dim):
+        ctx.machine_view = machine_view
         ctx.dim = dim
-
-        chunks = torch.chunk(tensor, len(machine_mapping), dim)
-        res = []
-        for machine, chunk in zip(machine_mapping, chunks):
-            chunk = chunk.to(machine)
-            res.append(chunk)
+        world_size = dist.get_world_size(machine_view)
         
-        return tuple(res)
+        local_rank = int(os.environ.get("LOCAL_RANK", 0))
+        global_rank = dist.get_rank()
+
+        chunks = None
+        if global_rank == 0:
+            chunks = list(torch.chunk(tensor, world_size, dim=dim))
+            for i in range(len(chunks)):
+                chunks[i] = chunks[i].contiguous()
+            
+            ndim_tensor = torch.tensor([len(chunks[0].shape)], dtype=torch.long).cuda(local_rank)
+        else:
+            ndim_tensor = torch.empty(1, dtype=torch.long).cuda(local_rank)
+        
+        dist.broadcast(ndim_tensor, src=0, group = machine_view, async_op=False)
+        ndim = ndim_tensor.item()
+
+        if global_rank == 0:
+            shape_tensor = torch.tensor(chunks[0].shape, dtype=torch.long).cuda(local_rank)
+        else:
+            shape_tensor = torch.empty(ndim, dtype=torch.long).cuda(local_rank)
+        
+        dist.broadcast(shape_tensor, src=0, group=machine_view, async_op=False)
+        shape = tuple(shape_tensor.tolist()) 
+
+        part_tensor = torch.empty(shape, dtype=torch.float32).cuda(local_rank)
+        
+        dist.scatter(part_tensor, scatter_list=chunks, src=0, group=machine_view, async_op=False)
+
+        return part_tensor
     
     @staticmethod
-    def backward(ctx, *grads):
-        grads_on_input_device = [g.to(ctx.input_device) for g in grads]
-        grad_input = torch.cat(grads_on_input_device, ctx.dim)
+    def backward(ctx, grads):
+        world_size = dist.get_world_size(ctx.machine_view)
+        global_rank = dist.get_rank()
 
-        return grad_input, None, None
+        if global_rank == 0:
+            gathered = [torch.empty_like(grads) for _ in range(world_size)]
+        else:
+            gathered = None
+        
+        dist.gather(grads, gathered, 0, group=ctx.machine_view, async_op=False)
+
+        if global_rank == 0:
+            res = torch.cat(gathered, ctx.dim)
+        else:
+            res = None
+                
+        return res, None, None

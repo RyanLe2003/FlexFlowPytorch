@@ -103,12 +103,11 @@ def parse_graph(json_graph):
             dependency_graph[node_name] = dependency_graph_parents
         
         if node_type == "Replicate":
-            obj = ReplicateNode(node_name, node_parents, node["machine_mapping"])
+            node_parents_refac = [f"{parent}_0" for parent in node_parents]
+            obj = ReplicateNode(node_name, node_parents_refac, node["machine_mapping"])
 
             node_map[node_name] = obj
             dependency_graph[node_name] = dependency_graph_parents
-
-            # refactor_info[node_name] = [f"{node_name}_{i}" for i in range(len(node["machine_mapping"]))]
         
         if node_type == "Reduce":
             if node_parents[0] in refactor_info:

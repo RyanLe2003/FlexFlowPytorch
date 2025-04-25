@@ -9,13 +9,18 @@ import os
 
 import torch.nn as nn
 
+print(f"Script starting...", flush=True)
+
 local_rank = int(os.environ.get("LOCAL_RANK", 0))
 dist.init_process_group(backend='nccl')
 torch.cuda.set_device(local_rank)
 global_rank = dist.get_rank()
 
+print(f"Process initialized: global_rank={global_rank}, local_rank={local_rank}")
+
 input_values_map = {}
 if global_rank == 0:
+    print(f"Rank {global_rank}: Creating input tensors")
     input_values_map["input"] = torch.tensor([[2, 3], [6, 7]], dtype=torch.float32, requires_grad=True).cuda(local_rank)
 
     weight = nn.Parameter(torch.tensor([[1, 2], [3, 4]], dtype=torch.float32, requires_grad=True).cuda(local_rank))
@@ -23,6 +28,7 @@ if global_rank == 0:
 
     optimizer = torch.optim.SGD([weight], lr=0.01)
 
+print(f"Rank {global_rank}: Setting up nodes")
 part_node = PartitionNode("partition",  ["input"], [0, 1], 0)
 rep_node = ReplicateNode("replicate", ["weight"], [0, 1])
 comb_node = CombineNode("combine", ["matmul"], [0, 1], 0)
@@ -65,7 +71,7 @@ if global_rank in [0]:
 
     print(input_values_map["weight"])
 
-
+print(f"Rank {global_rank}: Script completed")
 
 
 

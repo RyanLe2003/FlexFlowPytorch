@@ -1,11 +1,12 @@
 import torch
 
 class PCGNode:
-    def __init__(self, name, parents):
+    def __init__(self, name, parents, data=None):
         self.name = name
         self.parents = parents
+        self.data = data
     
-    def forward(self, input_values_all):
+    def forward(self):
         raise NotImplementedError
 
     

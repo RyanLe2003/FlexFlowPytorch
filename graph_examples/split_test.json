@@ -1,0 +1,1207 @@
+{
+  "__type": "V1ComputationGraph",
+  "raw_graph": {
+    "__type": "V1LabelledDataflowGraph",
+    "graph": {
+      "__type": "V1DataflowGraph",
+      "edges": [
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 0,
+          "dstNode": 18,
+          "srcIdx": 0,
+          "srcNode": 5
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 1,
+          "dstNode": 5,
+          "srcIdx": 0,
+          "srcNode": 1
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 2,
+          "dstNode": 15,
+          "srcIdx": 0,
+          "srcNode": 17
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 0,
+          "dstNode": 15,
+          "srcIdx": 0,
+          "srcNode": 21
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 2,
+          "dstNode": 11,
+          "srcIdx": 0,
+          "srcNode": 12
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 0,
+          "dstNode": 14,
+          "srcIdx": 0,
+          "srcNode": 16
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 0,
+          "dstNode": 11,
+          "srcIdx": 0,
+          "srcNode": 21
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 0,
+          "dstNode": 10,
+          "srcIdx": 0,
+          "srcNode": 15
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 1,
+          "dstNode": 11,
+          "srcIdx": 0,
+          "srcNode": 13
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 0,
+          "dstNode": 21,
+          "srcIdx": 0,
+          "srcNode": 6
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 2,
+          "dstNode": 20,
+          "srcIdx": 0,
+          "srcNode": 8
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 0,
+          "dstNode": 6,
+          "srcIdx": 0,
+          "srcNode": 0
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 1,
+          "dstNode": 18,
+          "srcIdx": 0,
+          "srcNode": 20
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 1,
+          "dstNode": 6,
+          "srcIdx": 0,
+          "srcNode": 2
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 0,
+          "dstNode": 16,
+          "srcIdx": 0,
+          "srcNode": 18
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 2,
+          "dstNode": 5,
+          "srcIdx": 0,
+          "srcNode": 3
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 0,
+          "dstNode": 5,
+          "srcIdx": 0,
+          "srcNode": 9
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 0,
+          "dstNode": 20,
+          "srcIdx": 0,
+          "srcNode": 9
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 0,
+          "dstNode": 9,
+          "srcIdx": 0,
+          "srcNode": 10
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 1,
+          "dstNode": 20,
+          "srcIdx": 0,
+          "srcNode": 7
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 1,
+          "dstNode": 10,
+          "srcIdx": 0,
+          "srcNode": 11
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 2,
+          "dstNode": 6,
+          "srcIdx": 0,
+          "srcNode": 4
+        },
+        {
+          "__type": "V1GraphEdge",
+          "dstIdx": 1,
+          "dstNode": 15,
+          "srcIdx": 0,
+          "srcNode": 19
+        }
+      ],
+      "nodes": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21
+      ]
+    },
+    "node_labels": [
+      [
+        12,
+        {
+          "__type": "LayerAttrs",
+          "name": null,
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "weight",
+            "value": {
+              "__type": "WeightAttrs",
+              "initializer": {
+                "__type": "InitializerAttrs",
+                "type": "uniform",
+                "value": {
+                  "__type": "UniformInitializerAttrs",
+                  "max_val": 0.0883883461356163,
+                  "min_val": -0.0883883461356163,
+                  "seed": 0
+                }
+              },
+              "tensor_shape": {
+                "__type": "TensorShape",
+                "data_type": "FLOAT",
+                "dims": {
+                  "__type": "TensorDims",
+                  "ff_ordered": [
+                    64
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ],
+      [
+        11,
+        {
+          "__type": "LayerAttrs",
+          "name": "LINEAR",
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "linear",
+            "value": {
+              "__type": "LinearAttrs",
+              "activation": null,
+              "data_type": "FLOAT",
+              "out_channels": 64,
+              "regularizer": null,
+              "use_bias": true
+            }
+          }
+        }
+      ],
+      [
+        10,
+        {
+          "__type": "LayerAttrs",
+          "name": "EW_ADD",
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "element_binary",
+            "value": {
+              "__type": "ElementBinaryAttrs",
+              "compute_type": "FLOAT",
+              "should_broadcast_lhs": false,
+              "should_broadcast_rhs": false,
+              "type": "EW_ADD"
+            }
+          }
+        }
+      ],
+      [
+        9,
+        {
+          "__type": "LayerAttrs",
+          "name": "RELU",
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "element_unary",
+            "value": {
+              "__type": "ElementUnaryAttrs",
+              "op_type": "RELU",
+              "scalar": null
+            }
+          }
+        }
+      ],
+      [
+        8,
+        {
+          "__type": "LayerAttrs",
+          "name": null,
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "weight",
+            "value": {
+              "__type": "WeightAttrs",
+              "initializer": {
+                "__type": "InitializerAttrs",
+                "type": "uniform",
+                "value": {
+                  "__type": "UniformInitializerAttrs",
+                  "max_val": 0.125,
+                  "min_val": -0.125,
+                  "seed": 0
+                }
+              },
+              "tensor_shape": {
+                "__type": "TensorShape",
+                "data_type": "FLOAT",
+                "dims": {
+                  "__type": "TensorDims",
+                  "ff_ordered": [
+                    32
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ],
+      [
+        7,
+        {
+          "__type": "LayerAttrs",
+          "name": null,
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "weight",
+            "value": {
+              "__type": "WeightAttrs",
+              "initializer": {
+                "__type": "InitializerAttrs",
+                "type": "kaiming_normal",
+                "value": {
+                  "__type": "KaimingNormalAttrs",
+                  "a": 2.2360680103302,
+                  "mode": "FAN_IN",
+                  "nonlinearity": "LEAKY_RELU",
+                  "seed": 0
+                }
+              },
+              "tensor_shape": {
+                "__type": "TensorShape",
+                "data_type": "FLOAT",
+                "dims": {
+                  "__type": "TensorDims",
+                  "ff_ordered": [
+                    64,
+                    32
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ],
+      [
+        6,
+        {
+          "__type": "LayerAttrs",
+          "name": "LINEAR",
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "linear",
+            "value": {
+              "__type": "LinearAttrs",
+              "activation": null,
+              "data_type": "FLOAT",
+              "out_channels": 128,
+              "regularizer": null,
+              "use_bias": true
+            }
+          }
+        }
+      ],
+      [
+        5,
+        {
+          "__type": "LayerAttrs",
+          "name": "LINEAR",
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "linear",
+            "value": {
+              "__type": "LinearAttrs",
+              "activation": null,
+              "data_type": "FLOAT",
+              "out_channels": 32,
+              "regularizer": null,
+              "use_bias": true
+            }
+          }
+        }
+      ],
+      [
+        4,
+        {
+          "__type": "LayerAttrs",
+          "name": null,
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "weight",
+            "value": {
+              "__type": "WeightAttrs",
+              "initializer": {
+                "__type": "InitializerAttrs",
+                "type": "uniform",
+                "value": {
+                  "__type": "UniformInitializerAttrs",
+                  "max_val": 0.0625,
+                  "min_val": -0.0625,
+                  "seed": 0
+                }
+              },
+              "tensor_shape": {
+                "__type": "TensorShape",
+                "data_type": "FLOAT",
+                "dims": {
+                  "__type": "TensorDims",
+                  "ff_ordered": [
+                    128
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ],
+      [
+        21,
+        {
+          "__type": "LayerAttrs",
+          "name": "RELU",
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "element_unary",
+            "value": {
+              "__type": "ElementUnaryAttrs",
+              "op_type": "RELU",
+              "scalar": null
+            }
+          }
+        }
+      ],
+      [
+        20,
+        {
+          "__type": "LayerAttrs",
+          "name": "LINEAR",
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "linear",
+            "value": {
+              "__type": "LinearAttrs",
+              "activation": null,
+              "data_type": "FLOAT",
+              "out_channels": 32,
+              "regularizer": null,
+              "use_bias": true
+            }
+          }
+        }
+      ],
+      [
+        19,
+        {
+          "__type": "LayerAttrs",
+          "name": null,
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "weight",
+            "value": {
+              "__type": "WeightAttrs",
+              "initializer": {
+                "__type": "InitializerAttrs",
+                "type": "kaiming_normal",
+                "value": {
+                  "__type": "KaimingNormalAttrs",
+                  "a": 2.2360680103302,
+                  "mode": "FAN_IN",
+                  "nonlinearity": "LEAKY_RELU",
+                  "seed": 0
+                }
+              },
+              "tensor_shape": {
+                "__type": "TensorShape",
+                "data_type": "FLOAT",
+                "dims": {
+                  "__type": "TensorDims",
+                  "ff_ordered": [
+                    128,
+                    64
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ],
+      [
+        18,
+        {
+          "__type": "LayerAttrs",
+          "name": "EW_ADD",
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "element_binary",
+            "value": {
+              "__type": "ElementBinaryAttrs",
+              "compute_type": "FLOAT",
+              "should_broadcast_lhs": false,
+              "should_broadcast_rhs": false,
+              "type": "EW_ADD"
+            }
+          }
+        }
+      ],
+      [
+        17,
+        {
+          "__type": "LayerAttrs",
+          "name": null,
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "weight",
+            "value": {
+              "__type": "WeightAttrs",
+              "initializer": {
+                "__type": "InitializerAttrs",
+                "type": "uniform",
+                "value": {
+                  "__type": "UniformInitializerAttrs",
+                  "max_val": 0.0883883461356163,
+                  "min_val": -0.0883883461356163,
+                  "seed": 0
+                }
+              },
+              "tensor_shape": {
+                "__type": "TensorShape",
+                "data_type": "FLOAT",
+                "dims": {
+                  "__type": "TensorDims",
+                  "ff_ordered": [
+                    64
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ],
+      [
+        16,
+        {
+          "__type": "LayerAttrs",
+          "name": "RELU",
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "element_unary",
+            "value": {
+              "__type": "ElementUnaryAttrs",
+              "op_type": "RELU",
+              "scalar": null
+            }
+          }
+        }
+      ],
+      [
+        3,
+        {
+          "__type": "LayerAttrs",
+          "name": null,
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "weight",
+            "value": {
+              "__type": "WeightAttrs",
+              "initializer": {
+                "__type": "InitializerAttrs",
+                "type": "uniform",
+                "value": {
+                  "__type": "UniformInitializerAttrs",
+                  "max_val": 0.125,
+                  "min_val": -0.125,
+                  "seed": 0
+                }
+              },
+              "tensor_shape": {
+                "__type": "TensorShape",
+                "data_type": "FLOAT",
+                "dims": {
+                  "__type": "TensorDims",
+                  "ff_ordered": [
+                    32
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ],
+      [
+        15,
+        {
+          "__type": "LayerAttrs",
+          "name": "LINEAR",
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "linear",
+            "value": {
+              "__type": "LinearAttrs",
+              "activation": null,
+              "data_type": "FLOAT",
+              "out_channels": 64,
+              "regularizer": null,
+              "use_bias": true
+            }
+          }
+        }
+      ],
+      [
+        2,
+        {
+          "__type": "LayerAttrs",
+          "name": null,
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "weight",
+            "value": {
+              "__type": "WeightAttrs",
+              "initializer": {
+                "__type": "InitializerAttrs",
+                "type": "kaiming_normal",
+                "value": {
+                  "__type": "KaimingNormalAttrs",
+                  "a": 2.2360680103302,
+                  "mode": "FAN_IN",
+                  "nonlinearity": "LEAKY_RELU",
+                  "seed": 0
+                }
+              },
+              "tensor_shape": {
+                "__type": "TensorShape",
+                "data_type": "FLOAT",
+                "dims": {
+                  "__type": "TensorDims",
+                  "ff_ordered": [
+                    256,
+                    128
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ],
+      [
+        14,
+        {
+          "__type": "LayerAttrs",
+          "name": "SOFTMAX",
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "softmax",
+            "value": {
+              "__type": "SoftmaxAttrs",
+              "dim": {
+                "__type": "ff_dim_t",
+                "value": 1
+              }
+            }
+          }
+        }
+      ],
+      [
+        1,
+        {
+          "__type": "LayerAttrs",
+          "name": null,
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "weight",
+            "value": {
+              "__type": "WeightAttrs",
+              "initializer": {
+                "__type": "InitializerAttrs",
+                "type": "kaiming_normal",
+                "value": {
+                  "__type": "KaimingNormalAttrs",
+                  "a": 2.2360680103302,
+                  "mode": "FAN_IN",
+                  "nonlinearity": "LEAKY_RELU",
+                  "seed": 0
+                }
+              },
+              "tensor_shape": {
+                "__type": "TensorShape",
+                "data_type": "FLOAT",
+                "dims": {
+                  "__type": "TensorDims",
+                  "ff_ordered": [
+                    64,
+                    32
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ],
+      [
+        13,
+        {
+          "__type": "LayerAttrs",
+          "name": null,
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "weight",
+            "value": {
+              "__type": "WeightAttrs",
+              "initializer": {
+                "__type": "InitializerAttrs",
+                "type": "kaiming_normal",
+                "value": {
+                  "__type": "KaimingNormalAttrs",
+                  "a": 2.2360680103302,
+                  "mode": "FAN_IN",
+                  "nonlinearity": "LEAKY_RELU",
+                  "seed": 0
+                }
+              },
+              "tensor_shape": {
+                "__type": "TensorShape",
+                "data_type": "FLOAT",
+                "dims": {
+                  "__type": "TensorDims",
+                  "ff_ordered": [
+                    128,
+                    64
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ],
+      [
+        0,
+        {
+          "__type": "LayerAttrs",
+          "name": null,
+          "op_attrs": {
+            "__type": "ComputationGraphOpAttrs",
+            "type": "input",
+            "value": {
+              "__type": "InputAttrs",
+              "tensor_shape": {
+                "__type": "TensorShape",
+                "data_type": "FLOAT",
+                "dims": {
+                  "__type": "TensorDims",
+                  "ff_ordered": [
+                    8,
+                    256
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    ],
+    "output_labels": [
+      [
+        12,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  64
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        11,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  8,
+                  64
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        10,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  8,
+                  64
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        9,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  8,
+                  64
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        8,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  32
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        7,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  64,
+                  32
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        6,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  8,
+                  128
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        5,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  8,
+                  32
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        4,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  128
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        21,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  8,
+                  128
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        20,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  8,
+                  32
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        19,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  128,
+                  64
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        18,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  8,
+                  32
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        17,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  64
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        16,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  8,
+                  32
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        3,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  32
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        15,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  8,
+                  64
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        2,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  256,
+                  128
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        14,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  8,
+                  32
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        1,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  64,
+                  32
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        13,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  128,
+                  64
+                ]
+              }
+            }
+          }
+        ]
+      ],
+      [
+        0,
+        [
+          {
+            "__type": "TensorAttrs",
+            "create_grad": "YES",
+            "shape": {
+              "__type": "TensorShape",
+              "data_type": "FLOAT",
+              "dims": {
+                "__type": "TensorDims",
+                "ff_ordered": [
+                  8,
+                  256
+                ]
+              }
+            }
+          }
+        ]
+      ]
+    ]
+  }
+}

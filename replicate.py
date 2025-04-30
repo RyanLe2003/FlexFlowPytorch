@@ -8,51 +8,61 @@ class ReplicateNode(PCGNode):
         super().__init__(name, parents)
         self.machine_view = machine_view
     
-    def forward(self, input_values_all):
+    def forward(self, name_to_node):
         local_rank = int(os.environ.get("LOCAL_RANK", 0))
         global_rank = dist.get_rank()
 
-        m_view = dist.new_group(self.machine_view)
+        # determine which processes are relevant
+        parent = name_to_node[self.parents[0]]  # replicate only has one parent
 
-        if self.parents[0] in input_values_all:
-            tensor = input_values_all[self.parents[0]]
+        if (global_rank not in parent.machine_view and
+            global_rank not in self.machine_view):
+            return
+        
+        src = parent.machine_view[0]
+        dev_group = dist.new_group(self.machine_view)
+
+        if (global_rank == src):
+            tensor = parent.data
             ndim_tensor = torch.tensor([len(tensor.shape)], dtype=torch.long).cuda(local_rank)
         else:
             ndim_tensor = torch.empty(1, dtype=torch.long).cuda(local_rank)
         
-        dist.broadcast(ndim_tensor, src=0, group=m_view, async_op=False)
+        dist.broadcast(ndim_tensor, src=src, group=dev_group, async_op=False)
         ndim = ndim_tensor.item()
 
-        if self.parents[0] in input_values_all:
+        if (global_rank == src):
             shape_tensor = torch.tensor(tensor.shape, dtype=torch.long).cuda(local_rank)
         else:
             shape_tensor = torch.empty(ndim, dtype=torch.long).cuda(local_rank)
         
-        dist.broadcast(shape_tensor, src=0, group=m_view, async_op=False)
+        dist.broadcast(shape_tensor, src=src, group=dev_group, async_op=False)
         shape = tuple(shape_tensor.tolist())
 
-        if self.parents[0] not in input_values_all:
-            tensor = torch.empty(shape, dtype=torch.float32, requires_grad=True).cuda(local_rank)
+        if global_rank != src:
+            tensor = torch.empty(shape, device=f'cuda:{local_rank}', dtype=torch.float32, requires_grad=True)
 
-        return Replicate.apply(tensor, dist.new_group(self.machine_view))
+        self.data = Replicate.apply(tensor, dev_group, src)
 
 
 class Replicate(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, tensor, machine_view):
-        ctx.machine_view = machine_view
+    def forward(ctx, tensor, device_group, src_rank):
+        ctx.device_group = device_group
+        ctx.src_rank = src_rank
         
-        dist.broadcast(tensor, src=0, group=machine_view, async_op=False)
+        dist.broadcast(tensor, src=src_rank, group=device_group, async_op=False)
 
         return tensor
     
     @staticmethod
     def backward(ctx, grads):
-        print(f"REP{grads}")
-        grad_input = grads.clone() #reduce is in place
-        dist.reduce(grad_input, dst=0, group=ctx.machine_view, async_op=False)  # commun proc at 0
+        global_rank = dist.get_rank()
 
-        if dist.get_rank() == 0:
-            return grad_input, None
+        grad_input = grads.clone()
+        dist.reduce(grad_input, dst=ctx.src_rank, group=ctx.device_group, async_op=False)  # commun proc at 0
+
+        if global_rank == ctx.src_rank:
+            return grad_input, None, None
         else:
-            return None, None
+            return None, None, None

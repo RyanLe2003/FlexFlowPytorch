@@ -9,67 +9,64 @@ class CombineNode(PCGNode):
         self.machine_view = machine_view
         self.dim = dim
     
-    def forward(self, input_values_all):
-        return Combine.apply(dist.new_group(self.machine_view), self.dim, input_values_all[self.parents[0]])
+    def forward(self, name_to_node):
+        local_rank = int(os.environ.get("LOCAL_RANK", 0))
+        global_rank = dist.get_rank()
+
+        # determine which processes are relevant
+        parent = name_to_node[self.parents[0]]
+
+        if (global_rank not in parent.machine_view and
+            global_rank not in self.machine_view):
+            return
+        
+        device_group = dist.new_group(parent.machine_view)
+        tensor = parent.data
+        dst = self.machine_view[0]
+        
+        self.data =  Combine.apply(tensor, device_group, self.dim, dst)
     
 
 class Combine(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, machine_view, dim, tensor):
-        ctx.machine_view = machine_view
+    def forward(ctx, tensor, device_group, dim, dst):
+        ctx.device_group = device_group
         ctx.dim = dim
         ctx.shape = tensor.shape
-        world_size = dist.get_world_size(machine_view)
+        ctx.dst = dst
+        world_size = dist.get_world_size(device_group)
 
         global_rank = dist.get_rank()
         local_rank = int(os.environ.get("LOCAL_RANK", 0))
 
-        if global_rank == 0:
+        if (global_rank == dst):
             gathered = [torch.empty_like(tensor) for _ in range(world_size)]
         else:
             gathered = None
 
-        dist.gather(tensor, gathered, 0, group=machine_view, async_op=False)  # commun proc at 0
+        dist.gather(tensor, gathered, dst, group=device_group, async_op=False)
 
-        if global_rank == 0:
+        if (global_rank == dst):
             res = torch.cat(gathered, dim)
-            ndim_tensor = torch.tensor([len(res.shape)], dtype=torch.long).cuda(local_rank)
         else:
-            ndim_tensor = torch.empty(1, dtype=torch.long).cuda(local_rank)
-
-        dist.broadcast(ndim_tensor, src=0, group=machine_view, async_op=False)
-        ndim = ndim_tensor.item()
-
-        if global_rank == 0:
-            shape_tensor = torch.tensor(res.shape, dtype=torch.long).cuda(local_rank)
-        else:
-            shape_tensor = torch.empty(ndim, dtype=torch.long).cuda(local_rank)
-        
-        
-        dist.broadcast(shape_tensor, src=0, group=machine_view, async_op=False)
-        shape = tuple(shape_tensor.tolist())
-
-        if global_rank != 0:
-            res = torch.empty(shape, dtype=torch.float32).cuda(local_rank)
+            res = torch.empty((1), dtype=torch.float32).cuda(local_rank)  # dummy tensor
         
         return res
     
     @staticmethod
     def backward(ctx, grads):
-        print(f"COMB{grads}")
-        world_size = dist.get_world_size(ctx.machine_view)
-
-        local_rank = int(os.environ.get("LOCAL_RANK", 0))
         global_rank = dist.get_rank()
+        local_rank = int(os.environ.get("LOCAL_RANK", 0))
+        world_size = dist.get_world_size(ctx.device_group)
 
         chunks = None
-        if global_rank == 0:
+        if global_rank == ctx.dst:
             chunks = list(torch.chunk(grads, world_size, dim=ctx.dim))
             for i in range(len(chunks)):
                 chunks[i] = chunks[i].contiguous()
         
         part_tensor = torch.empty(ctx.shape, dtype=torch.float32, requires_grad=True).cuda(local_rank)
 
-        dist.scatter(part_tensor, scatter_list=chunks, src=0, group=ctx.machine_view, async_op=False)  # commun proc at 0
+        dist.scatter(part_tensor, scatter_list=chunks, src=ctx.dst, group=ctx.device_group, async_op=False)  # commun proc at 0
 
-        return None, None, part_tensor
+        return part_tensor, None, None, None

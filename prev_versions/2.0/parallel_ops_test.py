@@ -1,7 +1,7 @@
-from combine import Combine
-from partition import Partition
-from replicate import Replicate
-from reduce import Reduce
+from pcg.pcg_nodes.combine import Combine
+from pcg.partition import Partition
+from pcg.replicate import Replicate
+from pcg.reduce import Reduce
 
 import torch.nn as nn
 import torch

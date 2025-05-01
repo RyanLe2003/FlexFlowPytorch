@@ -3,7 +3,7 @@ from unittest.mock import patch
 import torch
 
 from training import execute_pcg
-from pcg_node import PCGNode
+from pcg.pcg_node import PCGNode
 from parallel_ops.parallel_ops import parallel_ops
 from node_types import node_types
 from algebraic_ops import algebraic_ops

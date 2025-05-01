@@ -1,11 +1,11 @@
 import torch.nn as nn
 
-from combine import CombineNode
-from partition import PartitionNode
-from replicate import ReplicateNode
-from reduce import ReduceNode
-from matmul import MatmulNode
-from output import OutputNode
+from pcg.pcg_nodes.combine import CombineNode
+from pcg.partition import PartitionNode
+from pcg.replicate import ReplicateNode
+from pcg.reduce import ReduceNode
+from pcg.matmul import MatmulNode
+from pcg.output import OutputNode
 from relu import ReLUNode
 
 def parse_graph(json_graph):

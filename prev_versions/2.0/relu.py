@@ -1,4 +1,4 @@
-from pcg_node import PCGNode
+from pcg.pcg_node import PCGNode
 import torch
 import torch.nn as nn
 

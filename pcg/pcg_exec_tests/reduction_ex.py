@@ -1,9 +1,9 @@
-from partition import PartitionNode
-from reduce import ReduceNode
-from input import InputNode
-from weight import WeightNode
-from matmul import MatmulNode
-from output import OutputNode
+from pcg.pcg_nodes.partition import PartitionNode
+from pcg.pcg_nodes.reduce import ReduceNode
+from pcg.pcg_nodes.input import InputNode
+from pcg.pcg_nodes.weight import WeightNode
+from pcg.pcg_nodes.matmul import MatmulNode
+from pcg.pcg_nodes.output import OutputNode
 
 import torch.distributed as dist
 import torch

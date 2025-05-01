@@ -24,4 +24,4 @@ srun torchrun \
   --rdzv_id=$SLURM_JOB_ID \
   --rdzv_backend=c10d \
   --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
-  data_ex.py
+  -m pcg.pcg_exec_tests.data_ex

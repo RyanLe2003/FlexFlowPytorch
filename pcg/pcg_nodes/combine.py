@@ -1,5 +1,5 @@
 import torch
-from pcg_node import PCGNode
+from pcg.pcg_nodes.pcg_node import PCGNode
 import torch.distributed as dist
 import os
 

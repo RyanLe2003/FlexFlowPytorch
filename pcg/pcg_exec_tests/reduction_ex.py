@@ -11,34 +11,49 @@ import os
 
 import torch.nn as nn
 
+import pcg.util.topo_sort as ts
+
 local_rank = int(os.environ.get("LOCAL_RANK", 0))
 dist.init_process_group(backend='nccl')
 torch.cuda.set_device(local_rank)
 global_rank = dist.get_rank()
 
-# this will manually do the json processing step (nodes + train order)
+# json processing (done manually rn)
 input_data = [[2, 3], [6, 7]]
 weight_data = [[1, 2], [3, 4]]
 
-input_node = InputNode("input", [], [0], input_data)
-weight_node = WeightNode("weight", [], [0], weight_data)
-part_node_1 = PartitionNode("input_part", ["input"], [0, 1], 1)
-part_node_2 = PartitionNode("weight_part", ["weight"], [0, 1], 0)
-matmul = MatmulNode("matmul", ["input_part", "weight_part"], [0, 1])
-reduce = ReduceNode("reduce", ["matmul"], [0])
-output = OutputNode("output", ["reduce"], [0])  # should be the same as weight_node
+input_node = InputNode(1, [], [0], input_data)
+weight_node = WeightNode(2, [], [0], weight_data)
+part_node_1 = PartitionNode(3, [1], [0, 1], 1)
+part_node_2 = PartitionNode(4, [2], [0, 1], 0)
+matmul = MatmulNode(5, [3, 4], [0, 1])
+reduce = ReduceNode(6, [5], [0])
+output = OutputNode(7, [6], [0])  # should be the same as weight_node
 
 name_to_node = {
-    "input": input_node,
-    "weight": weight_node,
-    "input_part": part_node_1,
-    "weight_part": part_node_2,
-    "matmul": matmul,
-    "reduce": reduce,
-    "output": output
+    1: input_node,
+    2: weight_node,
+    3: part_node_1,
+    4: part_node_2,
+    5: matmul,
+    6: reduce,
+    7: output
 }
 
-order = [input_node, weight_node, part_node_1, part_node_2, matmul, reduce, output]
+graph = {
+    1: [3],
+    2: [4],
+    3: [5],
+    4: [5],
+    5: [6],
+    6: [7],
+    7: [],
+}
+
+# get lexicographical topological sort
+order = ts.get_order(graph)
+print(f"exec order: {order}")
+# order = [input_node, weight_node, part_node_1, part_node_2, matmul, reduce, output]
 
 # train
 def train(order, name_to_node, target):
@@ -47,7 +62,7 @@ def train(order, name_to_node, target):
         node.forward(name_to_node)
         print(f"{global_rank}: {node.data}")
     
-    prediction = name_to_node["output"].data
+    prediction = name_to_node[7].data
     if prediction is None:
         return
     
@@ -63,12 +78,12 @@ def train(order, name_to_node, target):
 
 
     # assuming weight device and output the same for now
-    if global_rank in name_to_node["output"].machine_view:
-        optimizer = torch.optim.SGD([name_to_node["weight"].data], lr=0.01)  # need a clean way to get this
+    if global_rank in name_to_node[7].machine_view:
+        optimizer = torch.optim.SGD([name_to_node[2].data], lr=0.01)  # need a clean way to get this
         optimizer.step()
         optimizer.zero_grad()
 
-        res = name_to_node["weight"].data
+        res = name_to_node[2].data
         print(f"RESULT: {res}")
 
 

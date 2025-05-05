@@ -37,10 +37,12 @@ class Reduce(torch.autograd.Function):
         tensor_cop = tensor.clone()
         dist.reduce(tensor_cop, dst=dst, group=device_group, async_op=False)
 
-        if global_rank == dst:
-            return tensor_cop
+        if (global_rank == dst):
+            res = tensor_cop
         else:
-            return torch.empty(tensor_cop.shape, dtype=torch.float32).cuda(local_rank)
+            res = torch.empty(tensor_cop.shape, dtype=torch.float32).cuda(local_rank)
+        
+        return res
 
     @staticmethod
     def backward(ctx, grads):

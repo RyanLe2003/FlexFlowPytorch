@@ -53,14 +53,13 @@ graph = {
 # get lexicographical topological sort
 order = ts.get_order(graph)
 print(f"exec order: {order}")
-# order = [input_node, weight_node, part_node_1, part_node_2, matmul, reduce, output]
 
 # train
 def train(order, name_to_node, target):
     # forward pass
     for node in order:
-        node.forward(name_to_node)
-        print(f"{global_rank}: {node.data}")
+        name_to_node[node].forward(name_to_node)
+        print(f"{global_rank}: {name_to_node[node].data}")
     
     prediction = name_to_node[7].data
     if prediction is None:
@@ -72,10 +71,6 @@ def train(order, name_to_node, target):
     loss = loss_fn(prediction, target)
 
     loss.backward()
-
-    for node in order:
-        print(f"{global_rank}: Name: {node.name} Leaf: {node.data.is_leaf}, requires_grad: {node.data.requires_grad}, grad: {node.data.grad}")
-
 
     # assuming weight device and output the same for now
     if global_rank in name_to_node[7].machine_view:

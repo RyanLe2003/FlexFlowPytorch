@@ -9,9 +9,8 @@ import torch.distributed as dist
 import torch
 import os
 
-import torch.nn as nn
-
 import pcg.util.topo_sort as ts
+import pcg.pcg_train.train as train
 
 local_rank = int(os.environ.get("LOCAL_RANK", 0))
 dist.init_process_group(backend='nccl')
@@ -54,39 +53,22 @@ graph = {
 order = ts.get_order(graph)
 print(f"exec order: {order}")
 
-# train
-def train(order, name_to_node, target):
-    # forward pass
-    for node in order:
-        name_to_node[node].forward(name_to_node)
-        print(f"{global_rank}: {name_to_node[node].data}")
-    
-    prediction = name_to_node[7].data
-    if prediction is None:
-        return
-    
-    # backward pass
-    
-    loss_fn = nn.MSELoss()
-    loss = loss_fn(prediction, target)
-
-    loss.backward()
-
-    # assuming weight device and output the same for now
-    if global_rank in name_to_node[7].machine_view:
-        optimizer = torch.optim.SGD([name_to_node[2].data], lr=0.01)  # need a clean way to get this
-        optimizer.step()
-        optimizer.zero_grad()
-
-        res = name_to_node[2].data
-        print(f"RESULT: {res}")
-
-
-
 num_epochs = 1
 target = torch.tensor([[10.0, 20.0], [30.0, 40.0]], dtype=torch.float32).cuda(local_rank)
+
+params = []
+output_node = None
+for name in order:
+    node = name_to_node[name]
+    if isinstance(node, WeightNode) and node.data is not None:
+        params.append(node.data)
+    elif isinstance(node, OutputNode):
+        output_node = node
+
 for i in range(num_epochs):
-    train(order, name_to_node, target)
+    train.train(order, name_to_node, target, params, output_node)
+
+print(f"AFTER TRAINING: {params}")
 
     
 

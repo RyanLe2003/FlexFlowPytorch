@@ -9,7 +9,7 @@ class OutputNode(PCGNode):
     def forward(self, name_to_node):
         global_rank = dist.get_rank()
 
-        # hack: we are actually concerned with the previous node's parents
+        # hack: we are actually concerned with the previous node's parents (for backward)
         parent = name_to_node[self.parents[0]].parents[0]
         pparent = name_to_node[parent]
 

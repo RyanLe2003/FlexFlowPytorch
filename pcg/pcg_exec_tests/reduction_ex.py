@@ -53,15 +53,15 @@ graph = {
 order = ts.get_order(graph)
 print(f"exec order: {order}")
 
-num_epochs = 1
+num_epochs = 5
 target = torch.tensor([[10.0, 20.0], [30.0, 40.0]], dtype=torch.float32).cuda(local_rank)
 
 params = []
 output_node = None
 for name in order:
     node = name_to_node[name]
-    if isinstance(node, WeightNode) and node.data is not None:
-        params.append(node.data)
+    if isinstance(node, WeightNode) and node.data[0] is not None:
+        params.append(node.data[0])
     elif isinstance(node, OutputNode):
         output_node = node
 

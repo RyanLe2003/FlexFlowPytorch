@@ -14,8 +14,16 @@ class MatmulNode(PCGNode):
 
         if global_rank not in self.machine_view:
             return
-        
-        tensor_one = name_to_node[self.parents[0]].data
-        tensor_two = name_to_node[self.parents[1]].data
 
-        self.data = torch.matmul(tensor_one, tensor_two)
+        proc_one = name_to_node[self.parents[0]].data
+        proc_two = name_to_node[self.parents[1]].data
+
+        if (len(proc_one) != len(proc_two)):
+            raise RuntimeError("Non matching data length in matmul")
+        
+        new_data = []
+        for i in range(len(proc_one)):
+            res = torch.matmul(proc_one[i], proc_two[i])
+            new_data.append(res)
+        
+        self.data = new_data

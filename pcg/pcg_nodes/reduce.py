@@ -18,12 +18,14 @@ class ReduceNode(PCGNode):
             global_rank not in self.machine_view):
             return
 
-        # going to assume here dst U src = src
-        device_group = dist.new_group(parent.machine_view)
-        tensor = parent.data
-        dst = self.machine_view[0]
+        new_data = []
+        for tensor in parent.data:
+            device_group = dist.new_group(parent.machine_view)
+            dst = self.machine_view[0]
 
-        self.data = Reduce.apply(tensor, device_group, dst)
+            res = Reduce.apply(tensor, device_group, dst)
+            new_data.append(res)
+        self.data = new_data
 
 
 class Reduce(torch.autograd.Function):

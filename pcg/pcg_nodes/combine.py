@@ -20,12 +20,15 @@ class CombineNode(PCGNode):
             global_rank not in self.machine_view):
             return
         
-        device_group = dist.new_group(parent.machine_view)
-        tensor = parent.data
-        dst = self.machine_view[0]
-        
-        self.data =  Combine.apply(tensor, device_group, self.dim, dst)
-    
+        new_data = []
+        for tensor in parent.data:
+            device_group = dist.new_group(parent.machine_view)
+            dst = self.machine_view[0]
+            
+            res = Combine.apply(tensor, device_group, self.dim, dst)
+            new_data.append(res)
+        self.data = new_data
+
 
 class Combine(torch.autograd.Function):
     @staticmethod

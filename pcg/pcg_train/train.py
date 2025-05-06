@@ -5,8 +5,11 @@ def train(order, name_to_node, target, params, output_node):
     # forward pass
     for node in order:
         name_to_node[node].forward(name_to_node)
+
+    if len(output_node.data) != 1:
+        raise RuntimeError("incorrect number of results produced")
     
-    prediction = output_node.data
+    prediction = output_node.data[0]
     if prediction is None:
         return
     

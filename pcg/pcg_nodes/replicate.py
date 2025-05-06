@@ -19,30 +19,34 @@ class ReplicateNode(PCGNode):
             global_rank not in self.machine_view):
             return
         
-        src = parent.machine_view[0]
-        dev_group = dist.new_group(self.machine_view)
+        # iterate over all devices in parent machine view
+        new_data = []
+        for src in parent.machine_view:
+            for tensor in parent.data:
+                dev_group = dist.new_group(self.machine_view)
 
-        if (global_rank == src):
-            tensor = parent.data
-            ndim_tensor = torch.tensor([len(tensor.shape)], dtype=torch.long).cuda(local_rank)
-        else:
-            ndim_tensor = torch.empty(1, dtype=torch.long).cuda(local_rank)
-        
-        dist.broadcast(ndim_tensor, src=src, group=dev_group, async_op=False)
-        ndim = ndim_tensor.item()
+                if (global_rank == src):
+                    ndim_tensor = torch.tensor([len(tensor.shape)], dtype=torch.long).cuda(local_rank)
+                else:
+                    ndim_tensor = torch.empty(1, dtype=torch.long).cuda(local_rank)
+                
+                dist.broadcast(ndim_tensor, src=src, group=dev_group, async_op=False)
+                ndim = ndim_tensor.item()
 
-        if (global_rank == src):
-            shape_tensor = torch.tensor(tensor.shape, dtype=torch.long).cuda(local_rank)
-        else:
-            shape_tensor = torch.empty(ndim, dtype=torch.long).cuda(local_rank)
-        
-        dist.broadcast(shape_tensor, src=src, group=dev_group, async_op=False)
-        shape = tuple(shape_tensor.tolist())
+                if (global_rank == src):
+                    shape_tensor = torch.tensor(tensor.shape, dtype=torch.long).cuda(local_rank)
+                else:
+                    shape_tensor = torch.empty(ndim, dtype=torch.long).cuda(local_rank)
+                
+                dist.broadcast(shape_tensor, src=src, group=dev_group, async_op=False)
+                shape = tuple(shape_tensor.tolist())
 
-        if global_rank != src:
-            tensor = torch.empty(shape, device=f'cuda:{local_rank}', dtype=torch.float32, requires_grad=True)
+                if global_rank != src:
+                    tensor = torch.empty(shape, device=f'cuda:{local_rank}', dtype=torch.float32, requires_grad=True)
 
-        self.data = Replicate.apply(tensor, dev_group, src)
+                res = Replicate.apply(tensor, dev_group, src)
+                new_data.append(res)
+        self.data = new_data
 
 
 class Replicate(torch.autograd.Function):

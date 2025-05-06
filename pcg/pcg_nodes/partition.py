@@ -20,42 +20,44 @@ class PartitionNode(PCGNode):
             global_rank not in self.machine_view):
             return
         
-        # for src in parent.machine_view (ASSUMING ALL PARENTS ARE A SINGLE TENSOR)
-        chunks = None
-        src = parent.machine_view[0]
-        dev_group = dist.new_group(self.machine_view)
-        
-        if (global_rank == src):
-            tensor = parent.data
-            tensor_cop = tensor.clone()
-            chunks = list(torch.chunk(tensor_cop, len(self.machine_view), dim=self.dim))
-            for i in range(len(chunks)):
-                chunks[i] = chunks[i].contiguous()
-        
-        # broadcast number of dimensions in a chunk
-        if (global_rank == src):
-            ndim_tensor = torch.tensor([len(chunks[0].shape)], dtype=torch.long).cuda(local_rank)
-        else:
-            ndim_tensor = torch.empty(1, dtype=torch.long).cuda(local_rank)
-        
-        dist.broadcast(ndim_tensor, src=src, group=dev_group, async_op=False)
-        ndim = ndim_tensor.item()
+        new_data = []
+        for src in parent.machine_view:
+            for tensor in parent.data:
+                dev_group = dist.new_group(self.machine_view)
+                
+                chunks = None
+                if (global_rank == src):
+                    tensor_cop = tensor.clone()
+                    chunks = list(torch.chunk(tensor_cop, len(self.machine_view), dim=self.dim))
+                    for i in range(len(chunks)):
+                        chunks[i] = chunks[i].contiguous()
+                
+                # broadcast number of dimensions in a chunk
+                if (global_rank == src):
+                    ndim_tensor = torch.tensor([len(chunks[0].shape)], dtype=torch.long).cuda(local_rank)
+                else:
+                    ndim_tensor = torch.empty(1, dtype=torch.long).cuda(local_rank)
+                
+                dist.broadcast(ndim_tensor, src=src, group=dev_group, async_op=False)
+                ndim = ndim_tensor.item()
 
-        # broadcast dimensions of a chunk
-        if global_rank == src:
-            shape_tensor = torch.tensor(chunks[0].shape, dtype=torch.long).cuda(local_rank)
-        else:
-            shape_tensor = torch.empty(ndim, dtype=torch.long).cuda(local_rank)
-        
-        dist.broadcast(shape_tensor, src=src, group=dev_group, async_op=False)
-        shape = tuple(shape_tensor.tolist())
+                # broadcast dimensions of a chunk
+                if global_rank == src:
+                    shape_tensor = torch.tensor(chunks[0].shape, dtype=torch.long).cuda(local_rank)
+                else:
+                    shape_tensor = torch.empty(ndim, dtype=torch.long).cuda(local_rank)
+                
+                dist.broadcast(shape_tensor, src=src, group=dev_group, async_op=False)
+                shape = tuple(shape_tensor.tolist())
 
-        # create partitions
-        part_tensor = torch.empty(shape, dtype=torch.float32, requires_grad=True).cuda(local_rank)
+                # create partitions
+                part_tensor = torch.empty(shape, dtype=torch.float32, requires_grad=True).cuda(local_rank)
 
-        part_tensor = Partition.apply(parent.data, dev_group, self.dim, src, part_tensor, chunks)
-        
-        self.data = part_tensor
+                part_tensor = Partition.apply(tensor, dev_group, self.dim, src, part_tensor, chunks)
+                
+                new_data.append(part_tensor)
+                
+        self.data = new_data
 
 
 class Partition(torch.autograd.Function):

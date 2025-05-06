@@ -21,6 +21,10 @@ class CombineNode(PCGNode):
             return
         
         new_data = []
+
+        # only support one for now
+        assert len(parent.data) == 1, f"Expected one local tensor, got {len(parent.data)}"
+
         for tensor in parent.data:
             device_group = dist.new_group(parent.machine_view)
             dst = self.machine_view[0]

@@ -2,6 +2,7 @@ import torch
 from pcg.pcg_nodes.pcg_node import PCGNode
 import torch.distributed as dist
 import os
+import pcg.util.move_tensor as mt
 
 class CombineNode(PCGNode):
     def __init__(self, name, parents, machine_view, dim):
@@ -26,38 +27,57 @@ class CombineNode(PCGNode):
         assert len(parent.data) == 1, f"Expected one local tensor, got {len(parent.data)}"
 
         for tensor in parent.data:
-            device_group = dist.new_group(parent.machine_view)
             dst = self.machine_view[0]
             
-            res = Combine.apply(tensor, device_group, self.dim, dst)
+            res = Combine.apply(tensor, parent.machine_view, self.dim, dst)
             new_data.append(res)
         self.data = new_data
 
 
 class Combine(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, tensor, device_group, dim, dst):
-        ctx.device_group = device_group
+    def forward(ctx, tensor, machine_view, dim, dst):
+        ctx.machine_view = machine_view
         ctx.dim = dim
         ctx.shape = tensor.shape
         ctx.dst = dst
+
+        device_group = dist.new_group(machine_view)
+        ctx.device_group = device_group
         world_size = dist.get_world_size(device_group)
 
         global_rank = dist.get_rank()
         local_rank = int(os.environ.get("LOCAL_RANK", 0))
 
-        if (global_rank == dst):
+        commun_proc = None
+        if dst in machine_view:
+            commun_proc = dst
+        else:
+            commun_proc = machine_view[0]
+        
+        if (global_rank == commun_proc):
             gathered = [torch.empty_like(tensor) for _ in range(world_size)]
         else:
             gathered = None
 
-        dist.gather(tensor, gathered, dst, group=device_group, async_op=False)
+        dist.gather(tensor, gathered, commun_proc, group=device_group, async_op=False)
 
-        if (global_rank == dst):
+        if (global_rank == commun_proc):
             res = torch.cat(gathered, dim)
         else:
             res = torch.empty((1), dtype=torch.float32).cuda(local_rank)  # dummy tensor
         
+        if dst not in machine_view:
+            shape_dev_group = dist.new_group([machine_view[0], dst])
+            if (global_rank == machine_view[0] or global_rank == dst):
+                shape = mt.get_shape(machine_view[0], tensor)
+
+            if (global_rank == machine_view[0]):
+                dist.send(res, dst=dst, group=shape_dev_group, async_op=False)
+                res = torch.empty((1), dtype=torch.float32).cuda(local_rank)
+            elif (global_rank == dst):
+                res = torch.empty(shape, dtype=torch.float32).cuda(local_rank)
+                dist.recv(res, src=machine_view[0], group=shape_dev_group, async_op=False)
         return res
     
     @staticmethod

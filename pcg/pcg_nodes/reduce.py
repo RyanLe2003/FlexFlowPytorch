@@ -3,6 +3,8 @@ import torch
 import torch.distributed as dist
 import os
 
+from pcg.util.device_group_cache import device_group_cache
+
 class ReduceNode(PCGNode):
     def __init__(self, name, parents, machine_view):
         super().__init__(name, parents)
@@ -11,6 +13,8 @@ class ReduceNode(PCGNode):
     def forward(self, name_to_node):
         local_rank = int(os.environ.get("LOCAL_RANK", 0))
         global_rank = dist.get_rank()
+
+        # print(f"{global_rank}-{self.name}: Reduce Start (Forward)")
 
         parent = name_to_node[self.parents[0]]
 
@@ -24,21 +28,24 @@ class ReduceNode(PCGNode):
         assert len(parent.data) == 1, f"Expected one local tensor, got {len(parent.data)}"
 
         for tensor in parent.data:
-            device_group = dist.new_group(parent.machine_view)
+            device_group = device_group_cache(parent.machine_view)
             dst = self.machine_view[0]
 
-            res = Reduce.apply(tensor, device_group, dst)
+            res = Reduce.apply(tensor, device_group, dst, self.name)
             new_data.append(res)
         self.data = new_data
+
+        # print(f"{global_rank}-{self.name}: Reduce Done (Forward)")
 
 
 class Reduce(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, tensor, device_group, dst):
+    def forward(ctx, tensor, device_group, dst, name):
         global_rank = dist.get_rank()
         local_rank = int(os.environ.get("LOCAL_RANK", 0))
         ctx.device_group = device_group
         ctx.dst = dst
+        ctx.name = name
 
         tensor_cop = tensor.clone()
         dist.reduce(tensor_cop, dst=dst, group=device_group, async_op=False)
@@ -53,9 +60,9 @@ class Reduce(torch.autograd.Function):
     @staticmethod
     def backward(ctx, grads):
         global_rank = dist.get_rank()
-        print(f"REDUCE, {global_rank}: {grads}")
+        print(f"{global_rank}-{ctx.name}: Reduce Start (Backward)")
         dist.broadcast(grads, src=ctx.dst, group=ctx.device_group, async_op=False)
 
-        print(f"REDUCE AFTER, {global_rank}: {grads}")
+        print(f"{global_rank}-{ctx.name}: Reduce Done (Backward)")
         
-        return grads, None, None
+        return grads, None, None, None

@@ -17,6 +17,8 @@ module load cuda
 MASTER_ADDR=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1)
 MASTER_PORT=29500
 
+# export NCCL_DEBUG=INFO
+
 # Torchrun distributed launch
 srun torchrun \
   --nnodes=$SLURM_NNODES \
@@ -24,4 +26,4 @@ srun torchrun \
   --rdzv_id=$SLURM_JOB_ID \
   --rdzv_backend=c10d \
   --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
-  -m pcg.pcg_exec_tests.reduction_ex
+  -m tests.MNIST

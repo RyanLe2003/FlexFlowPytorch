@@ -6,14 +6,7 @@ class OutputNode(PCGNode):
         super().__init__(name, parents)
         self.machine_view = machine_view
 
-    def forward(self, name_to_node):
-        global_rank = dist.get_rank()
-
-        # hack: we are actually concerned with the previous node's parents (for backward)
-        parent = name_to_node[self.parents[0]].parents[0]
-        pparent = name_to_node[parent]
-
-        if global_rank not in pparent.machine_view:
-            return
-        
+    def forward(self, name_to_node):        
         self.data = name_to_node[self.parents[0]].data
+
+        # print(f"{global_rank}-{self.name}: Output Done (Forward)")

@@ -1,7 +1,11 @@
 import torch
 import torch.nn as nn
 
-def train(order, name_to_node, target, params, output_node):
+import torch.distributed as dist
+from pcg.pcg_nodes.weight import WeightNode
+
+def train(order, name_to_node, target, params, output_node, loss_fn, optimizer):
+    global_rank = dist.get_rank()
     # forward pass
     for node in order:
         name_to_node[node].forward(name_to_node)
@@ -10,15 +14,34 @@ def train(order, name_to_node, target, params, output_node):
         raise RuntimeError("incorrect number of results produced")
     
     prediction = output_node.data[0]
-    if prediction is None:
-        return
+    # if prediction is None:
+    #     return
     
     # backward pass
-    loss_fn = nn.MSELoss()
+    loss = prediction
+    
     loss = loss_fn(prediction, target)
+
+    if global_rank in output_node.machine_view:
+        print(f"LOSS {loss}")
     loss.backward()
 
+    print(f"{global_rank}: done w backward")
+
     if params:
-        optimizer = torch.optim.SGD(params, lr=0.01)
-        optimizer.step()
+        optimizer.step()        
         optimizer.zero_grad()
+
+        print(f"{global_rank}: done w optimizer")
+
+    for name in order:
+        node = name_to_node[name]
+        if not isinstance(node, WeightNode):
+            for tensor in node.data:
+                if tensor is not None:
+                    tensor.detach()
+            node.data = []
+    
+    print(f"{global_rank}: done w empty data")
+            
+    del prediction, loss

@@ -12,7 +12,7 @@ class InputNode(PCGNode):
 
         tensor = None
         if global_rank in machine_view:
-            tensor = torch.tensor(data, dtype=torch.float32, device=f'cuda:{local_rank}', requires_grad=True)
+            tensor = data
         
         super().__init__(name, parents, tensor)
         self.machine_view = machine_view

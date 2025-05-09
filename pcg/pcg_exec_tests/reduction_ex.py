@@ -11,6 +11,7 @@ import os
 
 import pcg.util.topo_sort as ts
 import pcg.pcg_train.train as train
+import torch.nn as nn
 
 local_rank = int(os.environ.get("LOCAL_RANK", 0))
 dist.init_process_group(backend='nccl')
@@ -18,11 +19,9 @@ torch.cuda.set_device(local_rank)
 global_rank = dist.get_rank()
 
 # json processing (done manually rn)
-input_data = [[2, 3], [6, 7]]
-weight_data = [[1, 2], [3, 4]]
+input_data = torch.tensor([[2, 3], [6, 7]], dtype=torch.float32, device=f'cuda:{local_rank}', requires_grad=True)
 
-input_node = InputNode(1, [], [0], input_data)
-weight_node = WeightNode(2, [], [0], weight_data)
+weight_node = WeightNode(2, [], [0], (2, 2))
 part_node_1 = PartitionNode(3, [1], [0, 1], 1)
 part_node_2 = PartitionNode(4, [2], [0, 1], 0)
 matmul = MatmulNode(5, [3, 4], [0, 1])
@@ -30,7 +29,6 @@ reduce = ReduceNode(6, [5], [0])
 output = OutputNode(7, [6], [0])  # should be the same as weight_node
 
 name_to_node = {
-    1: input_node,
     2: weight_node,
     3: part_node_1,
     4: part_node_2,
@@ -53,20 +51,26 @@ graph = {
 order = ts.get_order(graph)
 print(f"exec order: {order}")
 
-num_epochs = 5
+num_epochs = 1
 target = torch.tensor([[10.0, 20.0], [30.0, 40.0]], dtype=torch.float32).cuda(local_rank)
 
-params = []
-output_node = None
-for name in order:
-    node = name_to_node[name]
-    if isinstance(node, WeightNode) and node.data[0] is not None:
-        params.append(node.data[0])
-    elif isinstance(node, OutputNode):
-        output_node = node
+params = None
+if global_rank == 0:
+    params = [weight_node.data[0]]
+output_node = output
 
 for i in range(num_epochs):
-    train.train(order, name_to_node, target, params, output_node)
+    input_node = InputNode(1, [], [0], input_data)
+    name_to_node[1] = input_node
+    train.train(
+        order, 
+        name_to_node, 
+        target, 
+        params, 
+        output_node,
+        loss_fn=nn.MSELoss(),
+        optimizer = torch.optim.SGD(params, lr=0.01) if params else None
+    )
 
 print(f"AFTER TRAINING: {params}")
 

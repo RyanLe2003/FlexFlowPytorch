@@ -69,12 +69,12 @@ class Replicate(torch.autograd.Function):
     @staticmethod
     def backward(ctx, grads):
         global_rank = dist.get_rank()
-        print(f"{global_rank}-{ctx.name}: Replicate Start (Backward):")
+        print(f"{global_rank}-{ctx.name}: Replicate Start (Backward): {grads}")
 
         grad_input = grads.clone()
         dist.reduce(grad_input, dst=ctx.src_rank, group=ctx.device_group, async_op=False)
 
-        print(f"{global_rank}-{ctx.name}: Replicate Done (Backward):")
+        print(f"{global_rank}-{ctx.name}: Replicate Done (Backward)")
 
         if global_rank == ctx.src_rank:
             return grad_input, None, None, None

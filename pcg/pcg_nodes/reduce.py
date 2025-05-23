@@ -60,9 +60,9 @@ class Reduce(torch.autograd.Function):
     @staticmethod
     def backward(ctx, grads):
         global_rank = dist.get_rank()
-        print(f"{global_rank}-{ctx.name}: Reduce Start (Backward)")
+        print(f"{global_rank}-{ctx.name}: Reduce Start (Backward): {grads}")
         dist.broadcast(grads, src=ctx.dst, group=ctx.device_group, async_op=False)
 
-        print(f"{global_rank}-{ctx.name}: Reduce Done (Backward)")
+        print(f"{global_rank}-{ctx.name}: Reduce Done (Backward): {grads}")
         
         return grads, None, None, None

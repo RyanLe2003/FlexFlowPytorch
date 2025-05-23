@@ -84,7 +84,7 @@ class Combine(torch.autograd.Function):
         local_rank = int(os.environ.get("LOCAL_RANK", 0))
         world_size = dist.get_world_size(ctx.device_group)
 
-        print(f"{global_rank}-{ctx.name}: Combine Start (Backward)")
+        print(f"{global_rank}-{ctx.name}: Combine Start (Backward): {grads}")
 
         chunks = None
         if global_rank == ctx.dst:
@@ -96,6 +96,6 @@ class Combine(torch.autograd.Function):
 
         dist.scatter(part_tensor, scatter_list=chunks, src=ctx.dst, group=ctx.device_group, async_op=False)
 
-        print(f"{global_rank}-{ctx.name}: Combine Done (Backward)")
+        print(f"{global_rank}-{ctx.name}: Combine Done (Backward): {part_tensor}")
 
         return part_tensor, None, None, None, None

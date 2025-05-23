@@ -83,7 +83,7 @@ class Partition(torch.autograd.Function):
         local_rank = int(os.environ.get("LOCAL_RANK", 0))
         world_size = dist.get_world_size(ctx.device_group)
 
-        print(f"{global_rank}-{ctx.name}: Partition Start (Backward)")
+        print(f"{global_rank}-{ctx.name}: Partition Start (Backward): {grads}")
         
         if global_rank == ctx.src_rank:
             gathered = [torch.empty_like(grads) for _ in range(world_size)]
@@ -97,6 +97,6 @@ class Partition(torch.autograd.Function):
         else:
             res = None
 
-        print(f"{global_rank}-{ctx.name}: Partition Done (Backward)")
+        print(f"{global_rank}-{ctx.name}: Partition Done (Backward): {res}")
           
         return res, None, None, None, None, None, None

@@ -5,12 +5,12 @@ import os
 import torch.nn as nn
 
 class SoftMaxNode(PCGNode):
-    def __init__(self, name, parents, machine_view, dim):
-        super().__init__(name, parents)
+    def __init__(self, name: int, parents: list, machine_view: list, dim: int):
+        super().__init__(name=name, parents=parents)
         self.machine_view = machine_view
         self.dim = dim
 
-    def forward(self, name_to_node):
+    def forward(self, name_to_node: map):
         local_rank = int(os.environ.get("LOCAL_RANK", 0))
         global_rank = dist.get_rank()
 
@@ -22,7 +22,7 @@ class SoftMaxNode(PCGNode):
             return
 
         m = nn.Softmax(self.dim)
-        self.data = [m(val)]
+        self.data = m(val)
 
         # print(f"{global_rank}-{self.name}: Softmax Done")
 

@@ -4,11 +4,11 @@ import torch.distributed as dist
 import os
 
 class MatmulNode(PCGNode):
-    def __init__(self, name, parents, machine_view):
-        super().__init__(name, parents)
+    def __init__(self, name: int, parents: list, machine_view: list):
+        super().__init__(name=name, parents=parents)
         self.machine_view = machine_view
 
-    def forward(self, name_to_node):
+    def forward(self, name_to_node: map):
         local_rank = int(os.environ.get("LOCAL_RANK", 0))
         global_rank = dist.get_rank()
 
@@ -18,12 +18,4 @@ class MatmulNode(PCGNode):
         proc_one = name_to_node[self.parents[0]].data
         proc_two = name_to_node[self.parents[1]].data
 
-        if (len(proc_one) != len(proc_two)):
-            raise RuntimeError("Non matching data length in matmul")
-        
-        new_data = []
-        for i in range(len(proc_one)):
-            res = torch.matmul(proc_one[i], proc_two[i])
-            new_data.append(res)
-        
-        self.data = new_data
+        self.data = torch.matmul(proc_one, proc_two)

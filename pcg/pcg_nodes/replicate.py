@@ -4,65 +4,66 @@ import torch.distributed as dist
 import os
 
 from pcg.util.device_group_cache import device_group_cache
+from pcg.pcg_nodes.parallel_tensor_attrs import *
 
 class ReplicateNode(PCGNode):
-    def __init__(self, name, parents, machine_view):
-        super().__init__(name, parents)
+    def __init__(
+            self, 
+            name: int, 
+            parents: list, 
+            parallel_tensor_attrs: ParallelTensorAttrs,
+            machine_view: list):
+        super().__init__(
+            name=name, 
+            parents=parents,
+            parallel_tensor_attrs=parallel_tensor_attrs)
         self.machine_view = machine_view
     
-    def forward(self, name_to_node):
+    def forward(self, name_to_node: map):
         local_rank = int(os.environ.get("LOCAL_RANK", 0))
         global_rank = dist.get_rank()
 
         # print(f"{global_rank}-{self.name}: Replicate Start (Forward)")
 
-        # determine which processes are relevant
-        parent = name_to_node[self.parents[0]]  # replicate only has one parent
+        parent = name_to_node[self.parents[0]]
 
         if (global_rank not in parent.machine_view and
             global_rank not in self.machine_view):
             return
-        
-        # iterate over all devices in parent machine view
-        new_data = []
-        for src in parent.machine_view:
-            for tensor in parent.data:
-                dev_group = device_group_cache(self.machine_view)
+    
+        dev_group = device_group_cache(self.machine_view)
+        input = parent.data
 
-                if (global_rank == src):
-                    ndim_tensor = torch.tensor([len(tensor.shape)], dtype=torch.long).cuda(local_rank)
-                else:
-                    ndim_tensor = torch.empty(1, dtype=torch.long).cuda(local_rank)
-                
-                dist.broadcast(ndim_tensor, src=src, group=dev_group, async_op=False)
-                ndim = ndim_tensor.item()
+        if input is None:
+            input = torch.empty(
+                size=self.get_shape(), 
+                dtype=torch.float32, 
+                requires_grad=True).cuda(local_rank)
 
-                if (global_rank == src):
-                    shape_tensor = torch.tensor(tensor.shape, dtype=torch.long).cuda(local_rank)
-                else:
-                    shape_tensor = torch.empty(ndim, dtype=torch.long).cuda(local_rank)
-                
-                dist.broadcast(shape_tensor, src=src, group=dev_group, async_op=False)
-                shape = tuple(shape_tensor.tolist())
+        src = parent.machine_view[0]
 
-                if tensor is None:
-                    tensor = torch.empty(shape, device=f'cuda:{local_rank}', dtype=torch.float32, requires_grad=True)
-
-                res = Replicate.apply(tensor, dev_group, src, self.name)
-                new_data.append(res)
-        self.data = new_data
+        self.data = Replicate.apply(input, dev_group, src, self.name)
 
         # print(f"{global_rank}-{self.name}: Replicate Done (Forward)")
 
 
 class Replicate(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, tensor, device_group, src_rank, name):
+    def forward(
+            ctx, 
+            tensor: torch.Tensor, 
+            device_group: dist.ProcessGroup, 
+            src_rank: int, 
+            name: str):
         ctx.device_group = device_group
         ctx.src_rank = src_rank
         ctx.name = name
         
-        dist.broadcast(tensor, src=src_rank, group=device_group, async_op=False)
+        dist.broadcast(
+            tensor=tensor, 
+            src=src_rank, 
+            group=device_group, 
+            async_op=False)
 
         return tensor
     
@@ -72,7 +73,11 @@ class Replicate(torch.autograd.Function):
         print(f"{global_rank}-{ctx.name}: Replicate Start (Backward): {grads}")
 
         grad_input = grads.clone()
-        dist.reduce(grad_input, dst=ctx.src_rank, group=ctx.device_group, async_op=False)
+        dist.reduce(
+            tensor=grad_input, 
+            dst=ctx.src_rank, 
+            group=ctx.device_group, 
+            async_op=False)
 
         print(f"{global_rank}-{ctx.name}: Replicate Done (Backward)")
 

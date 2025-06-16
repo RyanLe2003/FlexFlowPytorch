@@ -24,7 +24,7 @@ class ReluNode(PCGNode):
             return
 
         m = nn.ReLU()
-        self.data = [m(val)]
+        self.data = m(val)
 
         # print(f"{global_rank}-{self.name}: RELU Done")
 

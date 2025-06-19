@@ -3,10 +3,19 @@ import torch
 import torch.distributed as dist
 import os
 import torch.nn as nn
+from pcg.pcg_nodes.parallel_tensor_attrs import *
 
 class ReluNode(PCGNode):
-    def __init__(self, name, parents, machine_view):
-        super().__init__(name, parents)
+    def __init__(
+            self,
+            name: int, 
+            parents: list,
+            parallel_tensor_attrs: ParallelTensorAttrs, 
+            machine_view: list):
+        super().__init__(
+            name=name, 
+            parents=parents,
+            parallel_tensor_attrs=parallel_tensor_attrs)
         self.machine_view = machine_view
 
     def forward(self, name_to_node):
@@ -16,15 +25,15 @@ class ReluNode(PCGNode):
         if global_rank not in self.machine_view:
             return
         
-        val = name_to_node[self.parents[0]].data[0]
+        val = name_to_node[self.parents[0]].data
 
         if global_rank not in self.machine_view:
-            self.data = [val]
+            self.data = val
             # print(f"{global_rank}-{self.name}: RELU Done")
             return
 
         m = nn.ReLU()
-        self.data = [m(val)]
+        self.data = m(val)
 
         # print(f"{global_rank}-{self.name}: RELU Done")
 

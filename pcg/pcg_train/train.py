@@ -9,13 +9,7 @@ def train(order, name_to_node, target, params, output_node, loss_fn, optimizer):
     # forward pass
     for node in order:
         name_to_node[node].forward(name_to_node)
-
-    if len(output_node.data) != 1:
-        raise RuntimeError("incorrect number of results produced")
-    
-    prediction = output_node.data[0]
-    # if prediction is None:
-    #     return
+    prediction = output_node.data
     
     # backward pass
     loss = prediction
@@ -37,10 +31,7 @@ def train(order, name_to_node, target, params, output_node, loss_fn, optimizer):
     for name in order:
         node = name_to_node[name]
         if not isinstance(node, WeightNode):
-            for tensor in node.data:
-                if tensor is not None:
-                    tensor.detach()
-            node.data = []
+            node.data = None
     
     print(f"{global_rank}: done w empty data")
             

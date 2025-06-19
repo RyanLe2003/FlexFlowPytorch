@@ -104,15 +104,22 @@ graph = {
 order = ts.get_order(graph)
 print(f"exec order: {order}")
 
+num_epochs = 10
+target = torch.tensor(
+    [[10.0, 20.0], [30.0, 40.0]], 
+    dtype=torch.float32).cuda(local_rank)
+
 params = None
 if global_rank == 0:
     params = [weight_node.data]
-
+    
 output_node = output
 
-num_epochs = 10
-target = torch.tensor([[10.0, 20.0], [30.0, 40.0]], dtype=torch.float32).cuda(local_rank)
-input_data = torch.tensor([[2, 3], [6, 7]], dtype=torch.float32, device=f'cuda:{local_rank}', requires_grad=True)
+input_data = torch.tensor(
+    [[2, 3], [6, 7]], 
+    dtype=torch.float32, 
+    device=f'cuda:{local_rank}', 
+    requires_grad=True)
 input_node_attrs = ParallelTensorAttrs(
     ParallelTensorShape(
         ParallelTensorDim(

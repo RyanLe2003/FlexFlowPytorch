@@ -76,7 +76,7 @@ class Combine(torch.autograd.Function):
         dist.gather(
             tensor=tensor, 
             gather_list=gathered, 
-            dist=commun_proc, 
+            dst=commun_proc, 
             group=dev_group, 
             async_op=False)
 

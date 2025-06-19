@@ -61,7 +61,10 @@ class Partition(torch.autograd.Function):
 
         chunks = None
         if input is not None:
-            chunks = list(torch.chunk(input, len(dev_group), dim=dim))
+            chunks = list(torch.chunk(
+                input=input, 
+                chunks=dist.get_world_size(ctx.dev_group), 
+                dim=dim))
             for i in range(len(chunks)):
                 chunks[i] = chunks[i].contiguous()
             
@@ -89,7 +92,7 @@ class Partition(torch.autograd.Function):
         dist.gather(
             tensor=grads, 
             gather_list=gathered, 
-            dst=ctx.src_rank, 
+            dst=ctx.src, 
             group=ctx.dev_group, 
             async_op=False)
 

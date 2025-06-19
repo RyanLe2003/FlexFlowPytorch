@@ -1,9 +1,19 @@
 from pcg.pcg_nodes.pcg_node import PCGNode
 import torch.distributed as dist
+from pcg.pcg_nodes.parallel_tensor_attrs import *
 
 class OutputNode(PCGNode):
-    def __init__(self, name: int, parents: list, machine_view: list):
-        super().__init__(name=name, parents=parents)
+    def __init__(
+            self, 
+            name: int, 
+            parents: list, 
+            parallel_tensor_attrs: ParallelTensorAttrs, 
+            machine_view: list
+            ):
+        super().__init__(
+            name=name, 
+            parents=parents, 
+            parallel_tensor_attrs=parallel_tensor_attrs)
         self.machine_view = machine_view
 
     def forward(self, name_to_node: map):        

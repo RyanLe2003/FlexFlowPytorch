@@ -26,6 +26,7 @@ class PCGNode:
         
         for shard_dim in shard_dims:
             shape.append(shard_dim.size)
-
+        
+        return shape
 
     

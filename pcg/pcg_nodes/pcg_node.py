@@ -28,5 +28,3 @@ class PCGNode:
             shape.append(shard_dim.size)
         
         return shape
-
-    

@@ -4,3 +4,4 @@ with open("logs/result_parallel.txt") as f1, open("logs/result_nonparallel.txt")
         print("Outputs match!")
     else:
         print("Outputs differ.")
+        

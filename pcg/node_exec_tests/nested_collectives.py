@@ -41,6 +41,3 @@ while node_num < 8:
 for node in exec_order:
     node.forward(name_to_node)
     print(f"{global_rank}: {node.data}")
-
-
-

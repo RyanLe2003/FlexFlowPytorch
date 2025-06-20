@@ -29,3 +29,4 @@ class MatmulNode(PCGNode):
         proc_two = name_to_node[self.parents[1]].data
 
         self.data = torch.matmul(proc_one, proc_two)
+        

@@ -141,13 +141,3 @@ for i in range(num_epochs):
     )
 
 print(f"AFTER TRAINING: {params}")
-
-    
-
-
-
-
-
-
-
-

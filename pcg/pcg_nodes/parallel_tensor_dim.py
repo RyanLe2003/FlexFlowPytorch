@@ -9,7 +9,3 @@ class ParallelTensorDim:
 
         self.shard_dims = shard_dims
         self.replica_dims = replica_dims
-
-
-        
-        

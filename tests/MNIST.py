@@ -140,15 +140,5 @@ for i in range(epochs):
         j += 1
     print(f"{global_rank}: DONE W EPOCH {i}")
 
-
-
 print("DONE")
     
-
-
-
-    
-
-
-
-

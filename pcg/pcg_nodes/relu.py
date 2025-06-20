@@ -37,7 +37,4 @@ class ReluNode(PCGNode):
         self.data = m(val)
 
         # print(f"{global_rank}-{self.name}: RELU Done")
-
-
-
     

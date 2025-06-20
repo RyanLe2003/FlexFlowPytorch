@@ -54,3 +54,4 @@ def train(order, name_to_node, target, params, output_node, loss_fn, optimizer):
                 f.write(f"{param}")
 
     del prediction, loss
+    

@@ -20,3 +20,4 @@ class OutputNode(PCGNode):
         self.data = name_to_node[self.parents[0]].data
 
         # print(f"{global_rank}-{self.name}: Output Done (Forward)")
+        

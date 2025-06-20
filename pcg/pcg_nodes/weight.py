@@ -39,5 +39,3 @@ class WeightNode(PCGNode):
     def forward(self, name_to_node: map):
         pass
         
-
-

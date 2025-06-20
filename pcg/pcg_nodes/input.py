@@ -31,9 +31,3 @@ class InputNode(PCGNode):
 
     def forward(self, name_to_node):
         pass
-
-
-        
-
-
-

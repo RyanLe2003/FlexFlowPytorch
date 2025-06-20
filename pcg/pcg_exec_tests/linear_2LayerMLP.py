@@ -1,16 +1,10 @@
 from torchvision import datasets, transforms
 import torch
-from torch.utils.data import DataLoader
 
-from pcg.pcg_nodes.partition import PartitionNode
-from pcg.pcg_nodes.replicate import ReplicateNode
-from pcg.pcg_nodes.combine import CombineNode
-from pcg.pcg_nodes.reduce import ReduceNode
 from pcg.pcg_nodes.input import InputNode
 from pcg.pcg_nodes.weight import WeightNode
 from pcg.pcg_nodes.matmul import MatmulNode
 from pcg.pcg_nodes.relu import ReluNode
-from pcg.pcg_nodes.softmax import SoftMaxNode
 from pcg.pcg_nodes.output import OutputNode
 
 import pcg.util.topo_sort as ts
@@ -159,11 +153,3 @@ for i in range(epochs):
 
 print("DONE")
     
-
-
-
-    
-
-
-
-

@@ -10,7 +10,6 @@ def setup():
     
     torch.manual_seed(42)
 
-
 def get_rank():
     if dist.is_available() and dist.is_initialized():
         return dist.get_rank()
@@ -18,4 +17,3 @@ def get_rank():
 
 def is_parallel():
     return dist.is_available() and dist.is_initialized()
-

@@ -4,6 +4,7 @@ import torch.distributed as dist
 import os
 import torch.nn as nn
 from pcg.pcg_nodes.parallel_tensor_attrs import *
+from pcg.util.check_dist import get_rank
 
 
 class WeightNode(PCGNode):
@@ -11,10 +12,10 @@ class WeightNode(PCGNode):
             self, 
             name: int, 
             parents: list,
-            parallel_tensor_attrs: ParallelTensorAttrs,
-            machine_view: list
+            machine_view: list,
+            parallel_tensor_attrs: ParallelTensorAttrs=None
             ):
-        global_rank = dist.get_rank()
+        global_rank = get_rank()
         local_rank = int(os.environ.get("LOCAL_RANK", 0))
 
         super().__init__(

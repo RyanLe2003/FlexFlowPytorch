@@ -14,11 +14,11 @@ import pcg.util.topo_sort as ts
 import pcg.pcg_train.train as train
 import torch.nn as nn
 from pcg.pcg_nodes.parallel_tensor_attrs import *
+from pcg.util.check_dist import *
 
+setup()
 local_rank = int(os.environ.get("LOCAL_RANK", 0))
-dist.init_process_group(backend='nccl')
-torch.cuda.set_device(local_rank)
-global_rank = dist.get_rank()
+global_rank = get_rank()
 
 # manual pcg setup
 weight_node_attrs = ParallelTensorAttrs(
@@ -29,7 +29,7 @@ weight_node_attrs = ParallelTensorAttrs(
         )
     )
 )
-weight_node = WeightNode(2, [], weight_node_attrs, [0])
+weight_node = WeightNode(2, [], [0], weight_node_attrs)
 
 part_node_attrs = ParallelTensorAttrs(
     ParallelTensorShape(
@@ -59,7 +59,7 @@ matmul_node_attrs = ParallelTensorAttrs(
         )
     )
 )
-matmul = MatmulNode(5, [3, 4], matmul_node_attrs, [0, 1])
+matmul = MatmulNode(5, [3, 4], [0, 1], matmul_node_attrs)
 
 combine_node_attrs = ParallelTensorAttrs(
     ParallelTensorShape(
@@ -79,7 +79,7 @@ output_node_attrs = ParallelTensorAttrs(
         )
     )
 )
-output = OutputNode(7, [6], output_node_attrs, [0])
+output = OutputNode(7, [6], [0], output_node_attrs)
 
 name_to_node = {
     2: weight_node,
@@ -129,7 +129,7 @@ input_node_attrs = ParallelTensorAttrs(
     )
 )
 for i in range(num_epochs):
-    input_node = InputNode(1, [], input_node_attrs, [0], input_data)
+    input_node = InputNode(1, [], [0], input_data, input_node_attrs)
     name_to_node[1] = input_node
     train.train(
         order, 
@@ -142,13 +142,3 @@ for i in range(num_epochs):
     )
 
 print(f"AFTER TRAINING: {params}")
-
-    
-
-
-
-
-
-
-
-

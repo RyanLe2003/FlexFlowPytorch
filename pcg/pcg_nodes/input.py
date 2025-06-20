@@ -3,6 +3,7 @@ import torch
 import torch.distributed as dist
 import os
 from pcg.pcg_nodes.parallel_tensor_attrs import *
+from pcg.util.check_dist import get_rank
 
 # this will eventually need to be added when I get pcg
 # would likely need to convert json to list to tensor
@@ -11,10 +12,10 @@ class InputNode(PCGNode):
             self, 
             name: int, 
             parents: list, 
-            parallel_tensor_attrs: ParallelTensorAttrs, 
             machine_view: list, 
-            data):
-        global_rank = dist.get_rank()
+            data,
+            parallel_tensor_attrs: ParallelTensorAttrs=None):
+        global_rank = get_rank()
         local_rank = int(os.environ.get("LOCAL_RANK", 0))
 
         tensor = None

@@ -3,14 +3,15 @@ import torch
 import torch.distributed as dist
 import os
 from pcg.pcg_nodes.parallel_tensor_attrs import *
+from pcg.util.check_dist import get_rank
 
 class MatmulNode(PCGNode):
     def __init__(
             self, 
             name: int, 
             parents: list,
-            parallel_tensor_attrs: ParallelTensorAttrs,
-            machine_view: list):
+            machine_view: list,
+            parallel_tensor_attrs: ParallelTensorAttrs=None):
         super().__init__(
             name=name, 
             parents=parents,
@@ -19,7 +20,7 @@ class MatmulNode(PCGNode):
 
     def forward(self, name_to_node: map):
         local_rank = int(os.environ.get("LOCAL_RANK", 0))
-        global_rank = dist.get_rank()
+        global_rank = get_rank()
 
         if global_rank not in self.machine_view:
             return

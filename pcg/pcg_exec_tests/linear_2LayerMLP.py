@@ -48,98 +48,27 @@ weight_node_2_attrs = ParallelTensorAttrs(
 )
 weight_2 = WeightNode(3, [], [0], weight_node_2_attrs)
 
-input_part_attrs = ParallelTensorAttrs(
-    ParallelTensorShape(
-        ParallelTensorDim(
-            [ShardParallelDim(1, 1), ShardParallelDim(4, 2)], 
-            ReplicaParallelDim(1, 1)
-        )
-    )
-)
-input_partition = PartitionNode(4, [1], input_part_attrs, [0, 1], dim=1)
-
-weight_1_part_attrs = ParallelTensorAttrs(
-    ParallelTensorShape(
-        ParallelTensorDim(
-            [ShardParallelDim(4, 2), ShardParallelDim(4, 1)], 
-            ReplicaParallelDim(1, 1)
-        )
-    )
-)
-weight_1_partition = PartitionNode(5, [2], weight_1_part_attrs, [0, 1], dim=0)
-
-
-weight_2_part_attrs = ParallelTensorAttrs(
-    ParallelTensorShape(
-        ParallelTensorDim(
-            [ShardParallelDim(4, 1), ShardParallelDim(1, 2)], 
-            ReplicaParallelDim(1, 1)
-        )
-    )
-)
-weight_2_partition = PartitionNode(6, [3], weight_2_part_attrs, [0, 1], dim=1)
-
 matmul_1_attrs = ParallelTensorAttrs(
     ParallelTensorShape(
         ParallelTensorDim(
             [ShardParallelDim(1, 1), ShardParallelDim(4, 1)], 
-            ReplicaParallelDim(2, 1)
-        )
-    )
-)
-matmul_1 = MatmulNode(7, [4, 5], [0, 1], matmul_1_attrs)
-
-reduce_1_attrs = ParallelTensorAttrs(
-    ParallelTensorShape(
-        ParallelTensorDim(
-            [ShardParallelDim(1, 1), ShardParallelDim(4, 1)], 
             ReplicaParallelDim(1, 1)
         )
     )
 )
-reduce_1 = ReduceNode(8, [7], reduce_1_attrs, [0])
-
-replicate_1_attrs = ParallelTensorAttrs(
-    ParallelTensorShape(
-        ParallelTensorDim(
-            [ShardParallelDim(1, 1), ShardParallelDim(4, 1)], 
-            ReplicaParallelDim(1, 2)
-        )
-    )
-)
-replicate_1 = ReplicateNode(9, [8], replicate_1_attrs, [0, 1])
+matmul_1 = MatmulNode(4, [1, 2], [0], matmul_1_attrs)
 
 relu_1_attrs = ParallelTensorAttrs(
     ParallelTensorShape(
         ParallelTensorDim(
             [ShardParallelDim(1, 1), ShardParallelDim(4, 1)], 
-            ReplicaParallelDim(1, 2)
+            ReplicaParallelDim(1, 1)
         )
     )
 )
-relu_1 = ReluNode(10, [9], [0, 1], relu_1_attrs)
+relu_1 = ReluNode(5, [4], [0], relu_1_attrs)
 
 matmul_2_attrs = ParallelTensorAttrs(
-    ParallelTensorShape(
-        ParallelTensorDim(
-            [ShardParallelDim(1, 1), ShardParallelDim(1, 2)], 
-            ReplicaParallelDim(1, 1)
-        )
-    )
-)
-matmul_2 = MatmulNode(11, [10, 6], [0, 1], matmul_2_attrs)
-
-relu_2_attrs = ParallelTensorAttrs(
-    ParallelTensorShape(
-        ParallelTensorDim(
-            [ShardParallelDim(1, 1), ShardParallelDim(1, 2)], 
-            ReplicaParallelDim(1, 1)
-        )
-    )
-)
-relu_2 = ReluNode(12, [11], [0, 1], relu_2_attrs)
-
-comb_1_attrs = ParallelTensorAttrs(
     ParallelTensorShape(
         ParallelTensorDim(
             [ShardParallelDim(1, 1), ShardParallelDim(2, 1)], 
@@ -147,7 +76,17 @@ comb_1_attrs = ParallelTensorAttrs(
         )
     )
 )
-combine_1 = CombineNode(13, [12], comb_1_attrs, [0], dim=1)
+matmul_2 = MatmulNode(6, [5, 3], [0], matmul_2_attrs)
+
+relu_2_attrs = ParallelTensorAttrs(
+    ParallelTensorShape(
+        ParallelTensorDim(
+            [ShardParallelDim(1, 1), ShardParallelDim(2, 1)], 
+            ReplicaParallelDim(1, 1)
+        )
+    )
+)
+relu_2 = ReluNode(7, [6], [0], relu_2_attrs)
 
 output_attrs = ParallelTensorAttrs(
     ParallelTensorShape(
@@ -157,39 +96,27 @@ output_attrs = ParallelTensorAttrs(
         )
     )
 )
-output = OutputNode(14, [13], [0], output_attrs)
+output = OutputNode(8, [7], [0], output_attrs)
 
 name_to_node = {
     2: weight_1,
     3: weight_2,
-    4: input_partition,
-    5: weight_1_partition,
-    6: weight_2_partition,
-    7: matmul_1,
-    8: reduce_1,
-    9: replicate_1,
-    10: relu_1,
-    11: matmul_2,
-    12: relu_2,
-    13: combine_1,
-    14: output
+    4: matmul_1,
+    5: relu_1,
+    6: matmul_2,
+    7: relu_2,
+    8: output
 }
 
 graph = {
     1: [4],
-    2: [5],
+    2: [4],
     3: [6],
-    4: [7],
-    5: [7],
-    6: [11],
+    4: [5],
+    5: [6],
+    6: [7],
     7: [8],
-    8: [9],
-    9: [10],
-    10: [11],
-    11: [12],
-    12: [13],
-    13: [14],
-    14: []
+    8: [],
 }
 
 # get lexicographical topological sort

@@ -1,5 +1,3 @@
-from pcg.pcg_nodes.partition import PartitionNode
-from pcg.pcg_nodes.reduce import ReduceNode
 from pcg.pcg_nodes.input import InputNode
 from pcg.pcg_nodes.weight import WeightNode
 from pcg.pcg_nodes.matmul import MatmulNode
@@ -30,45 +28,15 @@ weight_node_attrs = ParallelTensorAttrs(
 )
 weight_node = WeightNode(2, [], [0], weight_node_attrs)
 
-part_node_1_attrs = ParallelTensorAttrs(
-    ParallelTensorShape(
-        ParallelTensorDim(
-            [ShardParallelDim(2, 1), ShardParallelDim(1, 2)], 
-            ReplicaParallelDim(1, 1)
-        )
-    )
-)
-part_node_1 = PartitionNode(3, [1], part_node_1_attrs, [0, 1], 1)
-
-part_node_2_attrs = ParallelTensorAttrs(
-    ParallelTensorShape(
-        ParallelTensorDim(
-            [ShardParallelDim(1, 2), ShardParallelDim(2, 1)], 
-            ReplicaParallelDim(1, 1)
-        )
-    )
-)
-part_node_2 = PartitionNode(4, [2], part_node_2_attrs, [0, 1], 0)
-
 matmul_node_attrs = ParallelTensorAttrs(
     ParallelTensorShape(
         ParallelTensorDim(
             [ShardParallelDim(2, 1), ShardParallelDim(2, 1)], 
-            ReplicaParallelDim(2, 1)
-        )
-    )
-)
-matmul = MatmulNode(5, [3, 4], [0, 1], matmul_node_attrs)
-
-reduce_node_attrs = ParallelTensorAttrs(
-    ParallelTensorShape(
-        ParallelTensorDim(
-            [ShardParallelDim(2, 1), ShardParallelDim(2, 1)], 
             ReplicaParallelDim(1, 1)
         )
     )
 )
-reduce = ReduceNode(6, [5], reduce_node_attrs, [0])
+matmul = MatmulNode(3, [1, 2], [0], matmul_node_attrs)
 
 output_node_attrs = ParallelTensorAttrs(
     ParallelTensorShape(
@@ -78,25 +46,19 @@ output_node_attrs = ParallelTensorAttrs(
         )
     )
 )
-output = OutputNode(7, [6], [0], output_node_attrs)
+output = OutputNode(4, [3], [0], output_node_attrs)
 
 name_to_node = {
     2: weight_node,
-    3: part_node_1,
-    4: part_node_2,
-    5: matmul,
-    6: reduce,
-    7: output
+    3: matmul,
+    4: output
 }
 
 graph = {
     1: [3],
-    2: [4],
-    3: [5],
-    4: [5],
-    5: [6],
-    6: [7],
-    7: [],
+    2: [3],
+    3: [4],
+    4: [],
 }
 
 # get lexicographical topological sort
@@ -111,7 +73,7 @@ target = torch.tensor(
 params = None
 if global_rank == 0:
     params = [weight_node.data]
-
+    
 output_node = output
 
 input_data = torch.tensor(
@@ -141,13 +103,3 @@ for i in range(num_epochs):
     )
 
 print(f"AFTER TRAINING: {params}")
-
-    
-
-
-
-
-
-
-
-

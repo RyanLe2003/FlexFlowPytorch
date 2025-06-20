@@ -7,8 +7,8 @@ class OutputNode(PCGNode):
             self, 
             name: int, 
             parents: list, 
-            parallel_tensor_attrs: ParallelTensorAttrs, 
-            machine_view: list
+            machine_view: list,
+            parallel_tensor_attrs: ParallelTensorAttrs=None
             ):
         super().__init__(
             name=name, 

@@ -2,7 +2,6 @@ from pcg.pcg_nodes.pcg_node import PCGNode
 import torch
 import torch.distributed as dist
 import os
-from pcg.util.move_tensor import get_shape
 from pcg.util.device_group_cache import device_group_cache
 from pcg.pcg_nodes.parallel_tensor_attrs import *
 

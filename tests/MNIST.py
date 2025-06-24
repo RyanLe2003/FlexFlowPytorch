@@ -21,6 +21,7 @@ import torch.distributed as dist
 import torch
 import os
 import gc
+from pcg.pcg_nodes.parallel_tensor_attrs import *
 
 local_rank = int(os.environ.get("LOCAL_RANK", 0))
 dist.init_process_group(backend='nccl')
@@ -41,19 +42,150 @@ test_dataset = datasets.MNIST(
     transform=transforms.ToTensor()  
 )
 
+batch_size = 64
 def build_graph(input_tensor, weight_1, weight_2):
-    input_node = InputNode(1, [], [0], input_tensor)
-    input_partition = PartitionNode(4, [1], [0, 1], dim=1)
-    weight_1_partition = PartitionNode(5, [2], [0, 1], dim=0)
-    weight_2_partition = PartitionNode(6, [3], [0, 1], dim=1)
-    matmul_1 = MatmulNode(7, [4, 5], [0, 1])
-    reduce_1 = ReduceNode(8, [7], [0])
-    replicate_1 = ReplicateNode(9, [8], [0, 1])
-    relu_1 = ReluNode(10, [9], [0, 1])
-    matmul_2 = MatmulNode(11, [10, 6], [0, 1])
-    relu_2 = ReluNode(12, [11], [0, 1])
-    combine_1 = CombineNode(13, [12], [0], dim=1)
-    output = OutputNode(14, [13], [0])
+    input_node_attrs = ParallelTensorAttrs(
+        ParallelTensorShape(
+            ParallelTensorDim(
+                [ShardParallelDim(batch_size, 1), ShardParallelDim(784, 1)], 
+                ReplicaParallelDim(1, 1)
+            )
+        )
+    )
+    input_node = InputNode(1, [], [0], input_tensor, input_node_attrs)
+
+    input_partition_attrs = ParallelTensorAttrs(
+        ParallelTensorShape(
+            ParallelTensorDim(
+                [ShardParallelDim(batch_size, 1), ShardParallelDim(392, 2)], 
+                ReplicaParallelDim(1, 1)
+            )
+        )
+    )
+    input_partition = PartitionNode(
+        4, 
+        [1],
+        input_partition_attrs,
+        [0, 1], 
+        dim=1
+        )
+
+    weight_1_partition_attrs = ParallelTensorAttrs(
+        ParallelTensorShape(
+            ParallelTensorDim(
+                [ShardParallelDim(392, 2), ShardParallelDim(512, 1)], 
+                ReplicaParallelDim(1, 1)
+            )
+        )
+    )
+    weight_1_partition = PartitionNode(
+        5, 
+        [2], 
+        weight_1_partition_attrs,
+        [0, 1],
+        dim=0
+        )
+    
+    weight_2_partition_attrs = ParallelTensorAttrs(
+        ParallelTensorShape(
+            ParallelTensorDim(
+                [ShardParallelDim(512, 1), ShardParallelDim(5, 2)], 
+                ReplicaParallelDim(1, 1)
+            )
+        )
+    )
+    weight_2_partition = PartitionNode(
+        6, 
+        [3], 
+        weight_2_partition_attrs,
+        [0, 1], 
+        dim=1
+        )
+    
+    matmul_1_attrs = ParallelTensorAttrs(
+        ParallelTensorShape(
+            ParallelTensorDim(
+                [ShardParallelDim(batch_size, 1), ShardParallelDim(512, 1)], 
+                ReplicaParallelDim(2, 1)
+            )
+        )
+    )
+    matmul_1 = MatmulNode(
+        7, 
+        [4, 5], 
+        [0, 1],
+        matmul_1_attrs
+        )
+    
+    reduce_1_attrs = ParallelTensorAttrs(
+        ParallelTensorShape(
+            ParallelTensorDim(
+                [ShardParallelDim(batch_size, 1), ShardParallelDim(512, 1)], 
+                ReplicaParallelDim(1, 1)
+            )
+        )
+    )
+    reduce_1 = ReduceNode(8, [7], reduce_1_attrs, [0])
+
+    replicate_1_attrs = ParallelTensorAttrs(
+        ParallelTensorShape(
+            ParallelTensorDim(
+                [ShardParallelDim(batch_size, 1), ShardParallelDim(512, 1)], 
+                ReplicaParallelDim(1, 2)
+            )
+        )
+    )
+    replicate_1 = ReplicateNode(9, [8], replicate_1_attrs, [0, 1])
+
+    relu_1_attrs = ParallelTensorAttrs(
+        ParallelTensorShape(
+            ParallelTensorDim(
+                [ShardParallelDim(batch_size, 1), ShardParallelDim(512, 1)], 
+                ReplicaParallelDim(1, 2)
+            )
+        )
+    )
+    relu_1 = ReluNode(10, [9], [0, 1], relu_1_attrs)
+
+    matmul_2_attrs = ParallelTensorAttrs(
+        ParallelTensorShape(
+            ParallelTensorDim(
+                [ShardParallelDim(batch_size, 1), ShardParallelDim(5, 2)], 
+                ReplicaParallelDim(1, 1)
+            )
+        )
+    )
+    matmul_2 = MatmulNode(11, [10, 6], [0, 1], matmul_2_attrs)
+
+    relu_2_attrs = ParallelTensorAttrs(
+        ParallelTensorShape(
+            ParallelTensorDim(
+                [ShardParallelDim(batch_size, 1), ShardParallelDim(5, 2)], 
+                ReplicaParallelDim(1, 1)
+            )
+        )
+    )
+    relu_2 = ReluNode(12, [11], [0, 1], relu_2_attrs)
+
+    combine_1_attrs = ParallelTensorAttrs(
+        ParallelTensorShape(
+            ParallelTensorDim(
+                [ShardParallelDim(batch_size, 1), ShardParallelDim(10, 1)], 
+                ReplicaParallelDim(1, 1)
+            )
+        )
+    )
+    combine_1 = CombineNode(13, [12], combine_1_attrs, [0], dim=1)
+
+    output_node_attrs = ParallelTensorAttrs(
+        ParallelTensorShape(
+            ParallelTensorDim(
+                [ShardParallelDim(batch_size, 1), ShardParallelDim(10, 1)], 
+                ReplicaParallelDim(1, 1)
+            )
+        )
+    )
+    output = OutputNode(14, [13], [0], output_node_attrs)
 
     name_to_node = {
         1: input_node,
@@ -91,27 +223,45 @@ graph = {
     14: []
 }
 
-weight_1 = WeightNode(2, [], [0], (784, 512))
-weight_2 = WeightNode(3, [], [0], (512, 10))
+weight_1_attrs = ParallelTensorAttrs(
+    ParallelTensorShape(
+        ParallelTensorDim(
+            [ShardParallelDim(784, 1), ShardParallelDim(512, 1)],
+            ReplicaParallelDim(1, 1)
+        )
+    )
+)
+weight_1 = WeightNode(2, [], [0], weight_1_attrs)
+
+weight_2_attrs = ParallelTensorAttrs(
+    ParallelTensorShape(
+        ParallelTensorDim(
+            [ShardParallelDim(512, 1), ShardParallelDim(10, 1)],
+            ReplicaParallelDim(1, 1)
+        )
+    )
+)
+weight_2 = WeightNode(3, [], [0], weight_2_attrs)
 
 # get lexicographical topological sort
 order = ts.get_order(graph)
 
 params = None
 if global_rank == 0:  # temp
-    params = [weight_1.data[0], weight_2.data[0]]
+    params = [weight_1.data, weight_2.data]
 
-batch_size = 64
 train_loader = DataLoader(
     train_dataset,
     batch_size=batch_size,
-    shuffle=True
+    shuffle=True,
+    drop_last=True
 )
 
 test_loader = DataLoader(
     test_dataset,
     batch_size=batch_size,
-    shuffle=False
+    shuffle=False,
+    drop_last=True
 )
 epochs = 1
 for i in range(epochs):
@@ -120,11 +270,17 @@ for i in range(epochs):
     for batch_images, batch_labels in train_loader:
         print(f"{global_rank}: STARTING BATCH {j}")
         # Reshape to [batch_size, 784] from [batch_size, 1, 28, 28]
-        batch_images_flat = batch_images.reshape(batch_images.shape[0], -1).to(device=f'cuda:{local_rank}')
+        batch_images_flat = batch_images.reshape(
+            batch_images.shape[0], -1).to(
+                device=f'cuda:{local_rank}')
         batch_labels = batch_labels.to(device=f'cuda:{local_rank}')
         
         # current batch
-        name_to_node, output_node = build_graph(batch_images_flat, weight_1, weight_2)
+        name_to_node, output_node = build_graph(
+            batch_images_flat, 
+            weight_1, 
+            weight_2
+            )
 
         train.train(
             order=order,

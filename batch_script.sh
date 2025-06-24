@@ -26,11 +26,11 @@ srun torchrun \
   --rdzv_id=$SLURM_JOB_ID \
   --rdzv_backend=c10d \
   --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
-  -m pcg.pcg_exec_tests.2LayerMLP \
+  -m tests.MNIST \
 
 # ---- 2. Non-Distributed Run (single process, single GPU) ----
 # Only run on the first node, first task
-python -m pcg.pcg_exec_tests.linear_2LayerMLP
+# python -m pcg.pcg_exec_tests.linear_2LayerMLP
 
 # ---- 3. Compare Outputs ----
-python compare_files.py
+# python compare_files.py

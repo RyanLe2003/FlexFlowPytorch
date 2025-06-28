@@ -45,11 +45,11 @@ def train(order, name_to_node, target, params, output_node, loss_fn, optimizer):
     first_run = False
 
     if is_parallel() and global_rank in output_node.machine_view:
-        with open("logs/result_parallel.txt", mode) as f:
+        with open("check/result_parallel.txt", mode) as f:
             for param in params:
                 f.write(f"{param}")
     elif not is_parallel():
-        with open("logs/result_nonparallel.txt", mode) as f:
+        with open("check/result_nonparallel.txt", mode) as f:
             for param in params:
                 f.write(f"{param}")
 

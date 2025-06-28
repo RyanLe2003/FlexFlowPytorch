@@ -5,8 +5,8 @@
 #SBATCH -c 40
 #SBATCH -p gpu
 #SBATCH --job-name=my_torch_job
-#SBATCH --output=logs/slurm-%j.out
-#SBATCH --error=logs/slurm-%j.err
+#SBATCH --output=check/log_batch_script.out
+#SBATCH --error=check/log_batch_script.err
 
 # Set up modules
 source /etc/profile.d/modules.sh
@@ -30,7 +30,7 @@ srun torchrun \
 
 # ---- 2. Non-Distributed Run (single process, single GPU) ----
 # Only run on the first node, first task
-# python -m pcg.pcg_exec_tests.linear_2LayerMLP
+python -m tests.linear_MNIST
 
 # ---- 3. Compare Outputs ----
-# python compare_files.py
+python compare_files.py
